@@ -1,0 +1,4 @@
+(function(root){
+function sample(d,r,lon,lat){if(!d||!r||lon<d.longitude[0]||lon>d.longitude.at(-1)||lat<d.latitude[0]||lat>d.latitude.at(-1))return null;const x=(lon-d.longitude[0])/(d.longitude[1]-d.longitude[0]),y=(lat-d.latitude[0])/(d.latitude[1]-d.latitude[0]),a=Math.min(d.width-2,Math.floor(x)),b=Math.min(d.height-2,Math.floor(y)),tx=x-a,ty=y-b;let speed=0,u=0,v=0,count=Infinity;for(const [i,j,w]of [[a,b,(1-tx)*(1-ty)],[a+1,b,tx*(1-ty)],[a,b+1,(1-tx)*ty],[a+1,b+1,tx*ty]]){if(w<1e-12)continue;const k=j*d.width+i;if(![r.values[k],r.u[k],r.v[k]].every(Number.isFinite))return null;speed+=w*r.values[k];u+=w*r.u[k];v+=w*r.v[k];count=Math.min(count,r.counts[k])}const net=Math.hypot(u,v),towards=net<.1?null:(Math.atan2(u,v)*180/Math.PI+360)%360;return {speed,u,v,net,towards,from:towards===null?null:(towards+180)%360,hours:count}}
+root.Wind={sample};if(typeof module!=='undefined')module.exports=root.Wind;
+})(typeof globalThis!=='undefined'?globalThis:this);

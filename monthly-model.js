@@ -1,0 +1,13 @@
+(function(root){
+const files={turbidity:'water-clarity',chlorophyll:'chlorophyll',temperature:'temperature_monthly',current:'currents_monthly',wind:'wind'};
+const headers=['grid_id','longitude_deg','latitude_deg','utm_easting_m','utm_northing_m','grid_spacing_m','calendar_month','active','excluded_route_id','route_half_width_m','coastal_estimates_enabled',
+ 'turbidity_source_month','turbidity_FNU','turbidity_original_FNU','turbidity_support_cells','turbidity_min_daily_observations',
+ 'chlorophyll_source_month','chlorophyll_mg_m3','chlorophyll_original_mg_m3','chlorophyll_support_cells','chlorophyll_min_daily_observations',
+ 'temperature_source_month','temperature_degC','temperature_original_degC','temperature_support_cells','temperature_coastal_estimate','temperature_nearest_source_m',
+ 'current_source_month','current_net_magnitude_m_s','current_original_net_magnitude_m_s','current_u_east_m_s','current_v_north_m_s','current_towards_deg','current_support_cells','current_coastal_estimate','current_nearest_source_m',
+ 'wind_source_month','wind_mean_speed_m_s','wind_u_east_m_s','wind_v_north_m_s','wind_net_magnitude_m_s','wind_towards_deg','wind_from_deg','wind_hour_count'];
+function bake(p,d,coastal=true){const out={};for(const key of Object.keys(files)){const data=d[key];if(!data||data.months.filter(r=>!r.status).length<=1)throw Error('Monthly dataset missing: '+key);out[key]=data.months.map(r=>p.active===false?null:key==='wind'?root.Wind.sample(data,r,p.lon,p.lat):root.Turbidity.sample({...data,coastalGapFillEnabled:coastal},r,p.lon,p.lat,1))}p.monthlyData=out;return out}
+function row(p,d,i,options={}){const o=p.monthlyData,source=key=>d[key].months[i].status?'':d[key].months[i].month,s=k=>o[k]?.[i],a=s('turbidity'),b=s('chlorophyll'),t=s('temperature'),c=s('current'),w=s('wind');return [p.id,p.lon,p.lat,p.e,p.n,p.spacing,i+1,p.active===false?0:1,p.excludedRoute||'',options.routeWidth??100,options.coastal===false?0:1,source('turbidity'),a?.value,a?.original,a?.support,a?.minCount,source('chlorophyll'),b?.value,b?.original,b?.support,b?.minCount,source('temperature'),t?.value,t?.original,t?.support,t?t.coastalEstimate?1:0:null,t?.nearestSourceMetres,source('current'),c?.value,c?.original,c?.u,c?.v,c?.direction,c?.support,c?c.coastalEstimate?1:0:null,c?.nearestSourceMetres,source('wind'),w?.speed,w?.u,w?.v,w?.net,w?.towards,w?.from,w?.hours]}
+function csvRow(row){return row.map(v=>v==null?'':typeof v==='number'?(Number.isInteger(v)?String(v):v.toFixed(6)):String(v).replaceAll('"','""')).map(v=>/[",\r\n]/.test(v)?'"'+v+'"':v).join(',')}
+root.Monthly={files,headers,bake,row,csvRow};if(typeof module!=='undefined')module.exports=root.Monthly;
+})(typeof globalThis!=='undefined'?globalThis:this);

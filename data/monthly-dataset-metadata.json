@@ -1,0 +1,343 @@
+{
+  "layout": "One row per grid point and calendar month (1-12)",
+  "rows": 43968,
+  "points": 3664,
+  "spacingMetres": 100,
+  "crs": "WGS84 lon/lat and EPSG:32632 easting/northing",
+  "missing": "Empty fields are unavailable or excluded, never zero-filled.",
+  "excluded": [
+    "Single-timestamp DMI salinity",
+    "Single-timestamp DMI temperature",
+    "Single-timestamp DMI currents",
+    "Static bathymetry"
+  ],
+  "dateWarning": "Temperature/current/wind use 2025. Satellite snapshots use mixed years 2025-2026; retain source_month per variable. December satellite data are missing.",
+  "prebakedSettings": {
+    "routeExclusions": false,
+    "coastalEstimates": true,
+    "minimumDailySatelliteObservations": 1
+  },
+  "sources": {
+    "turbidity": {
+      "source": "Copernicus Marine Sentinel-2 MSI HR-OC Baltic monthly L4",
+      "sourceUrl": "https://data.marine.copernicus.eu/product/OCEANCOLOUR_BAL_BGC_HR_L4_NRT_009_208/description",
+      "months": [
+        {
+          "label": "January",
+          "sourceMonth": "2025-01"
+        },
+        {
+          "label": "February",
+          "sourceMonth": "2025-02"
+        },
+        {
+          "label": "March",
+          "sourceMonth": "2026-03"
+        },
+        {
+          "label": "April",
+          "sourceMonth": "2026-04"
+        },
+        {
+          "label": "May",
+          "sourceMonth": "2026-05"
+        },
+        {
+          "label": "June",
+          "sourceMonth": "2026-06"
+        },
+        {
+          "label": "July",
+          "sourceMonth": "2026-07"
+        },
+        {
+          "label": "August",
+          "sourceMonth": "2026-08"
+        },
+        {
+          "label": "September",
+          "sourceMonth": "2026-09"
+        },
+        {
+          "label": "October",
+          "sourceMonth": "2025-10"
+        },
+        {
+          "label": "November",
+          "sourceMonth": "2025-11"
+        },
+        {
+          "label": "December",
+          "sourceMonth": null
+        }
+      ],
+      "method": "Source-valid bilinear interpolation; no temporal filling"
+    },
+    "chlorophyll": {
+      "source": "Copernicus Marine Sentinel-2 MSI HR-OC Baltic monthly L4",
+      "sourceUrl": "https://data.marine.copernicus.eu/product/OCEANCOLOUR_BAL_BGC_HR_L4_NRT_009_208/description",
+      "months": [
+        {
+          "label": "January",
+          "sourceMonth": "2025-01"
+        },
+        {
+          "label": "February",
+          "sourceMonth": "2025-02"
+        },
+        {
+          "label": "March",
+          "sourceMonth": "2026-03"
+        },
+        {
+          "label": "April",
+          "sourceMonth": "2026-04"
+        },
+        {
+          "label": "May",
+          "sourceMonth": "2026-05"
+        },
+        {
+          "label": "June",
+          "sourceMonth": "2026-06"
+        },
+        {
+          "label": "July",
+          "sourceMonth": "2026-07"
+        },
+        {
+          "label": "August",
+          "sourceMonth": "2026-08"
+        },
+        {
+          "label": "September",
+          "sourceMonth": "2026-09"
+        },
+        {
+          "label": "October",
+          "sourceMonth": "2025-10"
+        },
+        {
+          "label": "November",
+          "sourceMonth": "2025-11"
+        },
+        {
+          "label": "December",
+          "sourceMonth": null
+        }
+      ],
+      "method": "Source-valid bilinear interpolation; no temporal filling"
+    },
+    "temperature": {
+      "source": "Copernicus Marine Baltic Sea Physics Reanalysis",
+      "sourceUrl": "https://data.marine.copernicus.eu/product/BALTICSEA_MULTIYEAR_PHY_003_011/description",
+      "months": [
+        {
+          "label": "January",
+          "sourceMonth": "2025-01"
+        },
+        {
+          "label": "February",
+          "sourceMonth": "2025-02"
+        },
+        {
+          "label": "March",
+          "sourceMonth": "2025-03"
+        },
+        {
+          "label": "April",
+          "sourceMonth": "2025-04"
+        },
+        {
+          "label": "May",
+          "sourceMonth": "2025-05"
+        },
+        {
+          "label": "June",
+          "sourceMonth": "2025-06"
+        },
+        {
+          "label": "July",
+          "sourceMonth": "2025-07"
+        },
+        {
+          "label": "August",
+          "sourceMonth": "2025-08"
+        },
+        {
+          "label": "September",
+          "sourceMonth": "2025-09"
+        },
+        {
+          "label": "October",
+          "sourceMonth": "2025-10"
+        },
+        {
+          "label": "November",
+          "sourceMonth": "2025-11"
+        },
+        {
+          "label": "December",
+          "sourceMonth": "2025-12"
+        }
+      ],
+      "method": "Optional monthly-temperature coastal extrapolation: inverse-distance-squared weighting of up to four valid source centres within 2500 m; only water-grid points and water-clipped display use estimates. Original values stay null. No added observations."
+    },
+    "current": {
+      "source": "Copernicus Marine Baltic Sea Physics Reanalysis",
+      "sourceUrl": "https://data.marine.copernicus.eu/product/BALTICSEA_MULTIYEAR_PHY_003_011/description",
+      "months": [
+        {
+          "label": "January",
+          "sourceMonth": "2025-01"
+        },
+        {
+          "label": "February",
+          "sourceMonth": "2025-02"
+        },
+        {
+          "label": "March",
+          "sourceMonth": "2025-03"
+        },
+        {
+          "label": "April",
+          "sourceMonth": "2025-04"
+        },
+        {
+          "label": "May",
+          "sourceMonth": "2025-05"
+        },
+        {
+          "label": "June",
+          "sourceMonth": "2025-06"
+        },
+        {
+          "label": "July",
+          "sourceMonth": "2025-07"
+        },
+        {
+          "label": "August",
+          "sourceMonth": "2025-08"
+        },
+        {
+          "label": "September",
+          "sourceMonth": "2025-09"
+        },
+        {
+          "label": "October",
+          "sourceMonth": "2025-10"
+        },
+        {
+          "label": "November",
+          "sourceMonth": "2025-11"
+        },
+        {
+          "label": "December",
+          "sourceMonth": "2025-12"
+        }
+      ],
+      "method": "Optional IDW squared of up to 4 valid source centres within 2500 m, applied to u and v separately; geometric extrapolation only, not hydrodynamic simulation. Original values stay null."
+    },
+    "wind": {
+      "source": "ERA5 via Open-Meteo",
+      "sourceUrl": "https://open-meteo.com/en/docs/historical-weather-api",
+      "months": [
+        {
+          "label": "January",
+          "sourceMonth": "2025-01"
+        },
+        {
+          "label": "February",
+          "sourceMonth": "2025-02"
+        },
+        {
+          "label": "March",
+          "sourceMonth": "2025-03"
+        },
+        {
+          "label": "April",
+          "sourceMonth": "2025-04"
+        },
+        {
+          "label": "May",
+          "sourceMonth": "2025-05"
+        },
+        {
+          "label": "June",
+          "sourceMonth": "2025-06"
+        },
+        {
+          "label": "July",
+          "sourceMonth": "2025-07"
+        },
+        {
+          "label": "August",
+          "sourceMonth": "2025-08"
+        },
+        {
+          "label": "September",
+          "sourceMonth": "2025-09"
+        },
+        {
+          "label": "October",
+          "sourceMonth": "2025-10"
+        },
+        {
+          "label": "November",
+          "sourceMonth": "2025-11"
+        },
+        {
+          "label": "December",
+          "sourceMonth": "2025-12"
+        }
+      ],
+      "method": "Monthly arithmetic mean hourly speed; monthly mean eastward and northward velocity components from meteorological FROM bearings. Arrows point TOWARDS mean flow; mean speed is distinct from net-vector magnitude. Bilinear spatial interpolation. Regional model, not site-scale wind simulation."
+    }
+  },
+  "columns": [
+    "grid_id",
+    "longitude_deg",
+    "latitude_deg",
+    "utm_easting_m",
+    "utm_northing_m",
+    "grid_spacing_m",
+    "calendar_month",
+    "active",
+    "excluded_route_id",
+    "route_half_width_m",
+    "coastal_estimates_enabled",
+    "turbidity_source_month",
+    "turbidity_FNU",
+    "turbidity_original_FNU",
+    "turbidity_support_cells",
+    "turbidity_min_daily_observations",
+    "chlorophyll_source_month",
+    "chlorophyll_mg_m3",
+    "chlorophyll_original_mg_m3",
+    "chlorophyll_support_cells",
+    "chlorophyll_min_daily_observations",
+    "temperature_source_month",
+    "temperature_degC",
+    "temperature_original_degC",
+    "temperature_support_cells",
+    "temperature_coastal_estimate",
+    "temperature_nearest_source_m",
+    "current_source_month",
+    "current_net_magnitude_m_s",
+    "current_original_net_magnitude_m_s",
+    "current_u_east_m_s",
+    "current_v_north_m_s",
+    "current_towards_deg",
+    "current_support_cells",
+    "current_coastal_estimate",
+    "current_nearest_source_m",
+    "wind_source_month",
+    "wind_mean_speed_m_s",
+    "wind_u_east_m_s",
+    "wind_v_north_m_s",
+    "wind_net_magnitude_m_s",
+    "wind_towards_deg",
+    "wind_from_deg",
+    "wind_hour_count"
+  ]
+}

@@ -1,0 +1,5 @@
+(function(root){
+function segments(features,ids){const out=[],sx=111320*Math.cos(57.07*Math.PI/180),sy=111320;for(const f of features){if(!ids.includes(f.properties.id))continue;const lines=f.geometry.type==='LineString'?[f.geometry.coordinates]:f.geometry.coordinates;for(const line of lines)for(let i=1;i<line.length;i++){const a=line[i-1],b=line[i];out.push({id:f.properties.id,ax:a[0]*sx,ay:a[1]*sy,bx:b[0]*sx,by:b[1]*sy})}}return out}
+function excluded(lon,lat,segs,width){const x=lon*111320*Math.cos(57.07*Math.PI/180),y=lat*111320;for(const s of segs){if(x<Math.min(s.ax,s.bx)-width||x>Math.max(s.ax,s.bx)+width||y<Math.min(s.ay,s.by)-width||y>Math.max(s.ay,s.by)+width)continue;const dx=s.bx-s.ax,dy=s.by-s.ay,t=Math.max(0,Math.min(1,((x-s.ax)*dx+(y-s.ay)*dy)/(dx*dx+dy*dy||1)));if(Math.hypot(x-s.ax-t*dx,y-s.ay-t*dy)<=width)return s.id}return null}
+root.Routes={segments,excluded};if(typeof module!=='undefined')module.exports=root.Routes;
+})(typeof globalThis!=='undefined'?globalThis:this);
