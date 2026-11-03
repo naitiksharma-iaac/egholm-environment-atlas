@@ -1,6 +1,13 @@
 (function(root){
 'use strict';
 function sample(data,record,lon,lat,minimum=1){
+ if(data.variable==='salinity_historical'){
+  const mi=data.months.indexOf(record);if(mi<0)return {value:null,original:null,support:0,minCount:null};
+  const distances=data.stations.map(s=>Math.hypot((lon-s.longitude)*111320*Math.cos(lat*Math.PI/180),(lat-s.latitude)*111320));
+  const weights=distances.map(d=>1/Math.max(d,25)**2),total=weights.reduce((a,b)=>a+b,0);
+  const value=data.stations.reduce((a,s,i)=>a+s.months[mi].value*weights[i],0)/total;
+  return {value,original:null,support:2,minCount:null,nearestSourceMetres:Math.min(...distances),historicalEstimate:true};
+ }
  if(record?.u){
   const a=sample(data,{...record,u:undefined,values:record.u},lon,lat,minimum),b=sample(data,{...record,u:undefined,values:record.v},lon,lat,minimum);
   const value=a.value===null||b.value===null?null:Math.hypot(a.value,b.value);

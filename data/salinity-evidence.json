@@ -1,0 +1,539 @@
+{
+  "variable": "salinity_historical",
+  "kind": "historical_estimate",
+  "units": "PSS-78 (dimensionless)",
+  "period": "1989\u20132003",
+  "source": "ICES Ocean Hydrochemistry: bottle and low-resolution CTD",
+  "sourceUrl": "https://ocean.ices.dk/",
+  "retrieved": "2026-11-03",
+  "citation": "ICES Data Portal, Dataset on Ocean Hydrochemistry, extracted November 3, 2026. ICES, Copenhagen. CC BY 4.0.",
+  "depthRangeMetres": [
+    0,
+    1
+  ],
+  "method": "Quality flag QV:ODV=0 only. Mean within each cast at 0\u20131 m, then day, then year-month, then equal weight across available years. Two main-channel station seasonal means weighted by inverse distance squared. No temporal filling. All grid values are spatial estimates, not measurements.",
+  "limitations": "Historical seasonal reference, not 2025/2026 salinity. Two stations cannot resolve local shoreline, channel or island effects. A 100 m display grid does not mean 100 m source accuracy. Recent western observations are separate and include unknown quality (ODV=1). Practical salinity is dimensionless, not directly absolute salinity in g/kg.",
+  "stations": [
+    {
+      "id": "West-channel",
+      "longitude": 9.629167,
+      "latitude": 57.035,
+      "period": "1989\u20132003",
+      "dataset": "ICE",
+      "quality_flags": [
+        "0"
+      ],
+      "profile_count": 424,
+      "months": [
+        {
+          "month": 1,
+          "value": 25.58198717948718,
+          "years": 13,
+          "sample_days": 20,
+          "first_date": "1989-01-11",
+          "last_date": "2003-01-29",
+          "year_mean_sd": 2.3524997426511627
+        },
+        {
+          "month": 2,
+          "value": 26.323125,
+          "years": 12,
+          "sample_days": 19,
+          "first_date": "1989-02-09",
+          "last_date": "2002-02-26",
+          "year_mean_sd": 1.758167668664273
+        },
+        {
+          "month": 3,
+          "value": 25.379940476190477,
+          "years": 14,
+          "sample_days": 42,
+          "first_date": "1989-03-09",
+          "last_date": "2003-03-18",
+          "year_mean_sd": 1.7928576382807517
+        },
+        {
+          "month": 4,
+          "value": 24.315833333333334,
+          "years": 15,
+          "sample_days": 46,
+          "first_date": "1989-04-05",
+          "last_date": "2003-04-30",
+          "year_mean_sd": 2.2532159996924044
+        },
+        {
+          "month": 5,
+          "value": 24.461,
+          "years": 15,
+          "sample_days": 41,
+          "first_date": "1989-05-02",
+          "last_date": "2003-05-27",
+          "year_mean_sd": 1.999743093618826
+        },
+        {
+          "month": 6,
+          "value": 25.556555555555555,
+          "years": 15,
+          "sample_days": 41,
+          "first_date": "1989-06-07",
+          "last_date": "2003-06-25",
+          "year_mean_sd": 1.6608367639878876
+        },
+        {
+          "month": 7,
+          "value": 26.35878888888889,
+          "years": 15,
+          "sample_days": 50,
+          "first_date": "1989-07-04",
+          "last_date": "2003-07-22",
+          "year_mean_sd": 1.7937381651251258
+        },
+        {
+          "month": 8,
+          "value": 26.691472222222224,
+          "years": 15,
+          "sample_days": 48,
+          "first_date": "1989-08-09",
+          "last_date": "2003-08-20",
+          "year_mean_sd": 2.352613625249373
+        },
+        {
+          "month": 9,
+          "value": 25.98863888888889,
+          "years": 15,
+          "sample_days": 42,
+          "first_date": "1989-09-01",
+          "last_date": "2003-09-30",
+          "year_mean_sd": 1.9593633845423328
+        },
+        {
+          "month": 10,
+          "value": 25.805222222222223,
+          "years": 15,
+          "sample_days": 30,
+          "first_date": "1989-10-04",
+          "last_date": "2003-10-28",
+          "year_mean_sd": 2.044702685984951
+        },
+        {
+          "month": 11,
+          "value": 25.647166666666667,
+          "years": 15,
+          "sample_days": 26,
+          "first_date": "1989-11-01",
+          "last_date": "2003-11-25",
+          "year_mean_sd": 2.017446961400347
+        },
+        {
+          "month": 12,
+          "value": 25.099107142857143,
+          "years": 14,
+          "sample_days": 19,
+          "first_date": "1989-12-06",
+          "last_date": "2003-12-17",
+          "year_mean_sd": 1.8831131157920733
+        }
+      ]
+    },
+    {
+      "id": "East-channel",
+      "longitude": 9.94,
+      "latitude": 57.05,
+      "period": "1989\u20132003",
+      "dataset": "ICE",
+      "quality_flags": [
+        "0"
+      ],
+      "profile_count": 243,
+      "months": [
+        {
+          "month": 1,
+          "value": 24.980857142857143,
+          "years": 7,
+          "sample_days": 15,
+          "first_date": "1989-01-11",
+          "last_date": "1995-01-18",
+          "year_mean_sd": 2.107315818208547
+        },
+        {
+          "month": 2,
+          "value": 25.5145625,
+          "years": 8,
+          "sample_days": 18,
+          "first_date": "1989-02-09",
+          "last_date": "1997-02-18",
+          "year_mean_sd": 1.7631344134300797
+        },
+        {
+          "month": 3,
+          "value": 24.7515625,
+          "years": 8,
+          "sample_days": 21,
+          "first_date": "1989-03-09",
+          "last_date": "1997-03-12",
+          "year_mean_sd": 2.1423105108505616
+        },
+        {
+          "month": 4,
+          "value": 24.529833333333332,
+          "years": 9,
+          "sample_days": 24,
+          "first_date": "1989-04-05",
+          "last_date": "1997-04-30",
+          "year_mean_sd": 2.0674074042142734
+        },
+        {
+          "month": 5,
+          "value": 23.970458333333333,
+          "years": 8,
+          "sample_days": 27,
+          "first_date": "1989-05-18",
+          "last_date": "1997-05-29",
+          "year_mean_sd": 1.9992613313500924
+        },
+        {
+          "month": 6,
+          "value": 24.482685185185186,
+          "years": 9,
+          "sample_days": 20,
+          "first_date": "1989-06-21",
+          "last_date": "1997-06-25",
+          "year_mean_sd": 2.115503362159617
+        },
+        {
+          "month": 7,
+          "value": 25.86023148148148,
+          "years": 9,
+          "sample_days": 17,
+          "first_date": "1989-07-12",
+          "last_date": "1997-07-30",
+          "year_mean_sd": 1.834507331388935
+        },
+        {
+          "month": 8,
+          "value": 26.095075,
+          "years": 10,
+          "sample_days": 21,
+          "first_date": "1989-08-09",
+          "last_date": "2003-08-12",
+          "year_mean_sd": 2.3609454440082547
+        },
+        {
+          "month": 9,
+          "value": 24.769375,
+          "years": 8,
+          "sample_days": 20,
+          "first_date": "1989-09-13",
+          "last_date": "1997-09-17",
+          "year_mean_sd": 3.09886702510542
+        },
+        {
+          "month": 10,
+          "value": 25.61111111111111,
+          "years": 9,
+          "sample_days": 18,
+          "first_date": "1989-10-11",
+          "last_date": "1997-10-15",
+          "year_mean_sd": 1.94113011184493
+        },
+        {
+          "month": 11,
+          "value": 25.506222222222224,
+          "years": 9,
+          "sample_days": 21,
+          "first_date": "1989-11-08",
+          "last_date": "1997-11-12",
+          "year_mean_sd": 1.9134340057719377
+        },
+        {
+          "month": 12,
+          "value": 24.8584375,
+          "years": 8,
+          "sample_days": 16,
+          "first_date": "1989-12-06",
+          "last_date": "1996-12-05",
+          "year_mean_sd": 1.3836538955528475
+        }
+      ]
+    }
+  ],
+  "recentReference": {
+    "id": "Recent-west-reference",
+    "longitude": 9.623,
+    "latitude": 57.0335,
+    "period": "2021\u20132025",
+    "dataset": "CTD",
+    "quality_flags": [
+      "0",
+      "1"
+    ],
+    "profile_count": 79,
+    "months": [
+      {
+        "month": 1,
+        "value": 25.318981481481483,
+        "years": 3,
+        "sample_days": 7,
+        "first_date": "2022-01-03",
+        "last_date": "2025-01-31",
+        "year_mean_sd": 0.4464057707287358
+      },
+      {
+        "month": 2,
+        "value": 25.830277777777777,
+        "years": 3,
+        "sample_days": 5,
+        "first_date": "2022-02-14",
+        "last_date": "2025-02-26",
+        "year_mean_sd": 0.8875153884946521
+      },
+      {
+        "month": 3,
+        "value": 24.150277777777777,
+        "years": 3,
+        "sample_days": 5,
+        "first_date": "2022-03-14",
+        "last_date": "2025-03-26",
+        "year_mean_sd": 2.0163354296383345
+      },
+      {
+        "month": 4,
+        "value": 22.77611111111111,
+        "years": 3,
+        "sample_days": 5,
+        "first_date": "2022-04-01",
+        "last_date": "2025-04-15",
+        "year_mean_sd": 2.21461705576917
+      },
+      {
+        "month": 5,
+        "value": 25.38586111111111,
+        "years": 3,
+        "sample_days": 5,
+        "first_date": "2022-05-09",
+        "last_date": "2025-05-15",
+        "year_mean_sd": 1.4425316777123847
+      },
+      {
+        "month": 6,
+        "value": 25.36318888888889,
+        "years": 5,
+        "sample_days": 12,
+        "first_date": "2021-06-02",
+        "last_date": "2025-06-24",
+        "year_mean_sd": 1.8379356859810057
+      },
+      {
+        "month": 7,
+        "value": 25.7574,
+        "years": 5,
+        "sample_days": 9,
+        "first_date": "2021-07-12",
+        "last_date": "2025-07-30",
+        "year_mean_sd": 1.9198642660354925
+      },
+      {
+        "month": 8,
+        "value": 26.4851,
+        "years": 5,
+        "sample_days": 11,
+        "first_date": "2021-08-04",
+        "last_date": "2025-08-19",
+        "year_mean_sd": 1.8502571277768105
+      },
+      {
+        "month": 9,
+        "value": 25.896933333333333,
+        "years": 5,
+        "sample_days": 10,
+        "first_date": "2021-09-02",
+        "last_date": "2025-09-18",
+        "year_mean_sd": 2.3209305802486497
+      },
+      {
+        "month": 10,
+        "value": 26.784166666666668,
+        "years": 4,
+        "sample_days": 4,
+        "first_date": "2022-10-20",
+        "last_date": "2025-10-30",
+        "year_mean_sd": 2.0838912586259823
+      },
+      {
+        "month": 11,
+        "value": 25.688333333333336,
+        "years": 3,
+        "sample_days": 6,
+        "first_date": "2022-11-03",
+        "last_date": "2025-11-12",
+        "year_mean_sd": 2.1051266786902243
+      },
+      {
+        "month": 12,
+        "value": null,
+        "years": 0,
+        "sample_days": 0,
+        "first_date": null,
+        "last_date": null,
+        "year_mean_sd": null
+      }
+    ]
+  },
+  "independentHistoricalCheck": {
+    "station": {
+      "id": "Historical-near-Egholm-check",
+      "longitude": 9.69,
+      "latitude": 57.05,
+      "period": "1989\u20132003",
+      "dataset": "ICE",
+      "quality_flags": [
+        "0"
+      ],
+      "profile_count": 164,
+      "months": [
+        {
+          "month": 1,
+          "value": null,
+          "years": 0,
+          "sample_days": 0,
+          "first_date": null,
+          "last_date": null,
+          "year_mean_sd": null
+        },
+        {
+          "month": 2,
+          "value": null,
+          "years": 0,
+          "sample_days": 0,
+          "first_date": null,
+          "last_date": null,
+          "year_mean_sd": null
+        },
+        {
+          "month": 3,
+          "value": null,
+          "years": 0,
+          "sample_days": 0,
+          "first_date": null,
+          "last_date": null,
+          "year_mean_sd": null
+        },
+        {
+          "month": 4,
+          "value": null,
+          "years": 0,
+          "sample_days": 0,
+          "first_date": null,
+          "last_date": null,
+          "year_mean_sd": null
+        },
+        {
+          "month": 5,
+          "value": 24.083125,
+          "years": 8,
+          "sample_days": 16,
+          "first_date": "1990-05-16",
+          "last_date": "2000-05-22",
+          "year_mean_sd": 1.9088391796819575
+        },
+        {
+          "month": 6,
+          "value": 25.587307692307693,
+          "years": 13,
+          "sample_days": 28,
+          "first_date": "1989-06-07",
+          "last_date": "2002-06-03",
+          "year_mean_sd": 1.6721748616117478
+        },
+        {
+          "month": 7,
+          "value": 26.257202380952382,
+          "years": 14,
+          "sample_days": 39,
+          "first_date": "1989-07-04",
+          "last_date": "2003-07-21",
+          "year_mean_sd": 1.8779462779817082
+        },
+        {
+          "month": 8,
+          "value": 26.30827380952381,
+          "years": 14,
+          "sample_days": 40,
+          "first_date": "1989-08-09",
+          "last_date": "2003-08-19",
+          "year_mean_sd": 2.558528169818934
+        },
+        {
+          "month": 9,
+          "value": 25.548035714285714,
+          "years": 14,
+          "sample_days": 30,
+          "first_date": "1989-09-13",
+          "last_date": "2003-09-15",
+          "year_mean_sd": 1.9778890372056182
+        },
+        {
+          "month": 10,
+          "value": 25.699375,
+          "years": 8,
+          "sample_days": 11,
+          "first_date": "1990-10-02",
+          "last_date": "1998-10-12",
+          "year_mean_sd": 2.626603506839748
+        },
+        {
+          "month": 11,
+          "value": null,
+          "years": 0,
+          "sample_days": 0,
+          "first_date": null,
+          "last_date": null,
+          "year_mean_sd": null
+        },
+        {
+          "month": 12,
+          "value": null,
+          "years": 0,
+          "sample_days": 0,
+          "first_date": null,
+          "last_date": null,
+          "year_mean_sd": null
+        }
+      ]
+    },
+    "comparison": [
+      {
+        "month": 5,
+        "observed": 24.083125,
+        "estimated": 24.42831822758033
+      },
+      {
+        "month": 6,
+        "observed": 25.587307692307693,
+        "estimated": 25.485010181456854
+      },
+      {
+        "month": 7,
+        "observed": 26.257202380952382,
+        "estimated": 26.32557307699314
+      },
+      {
+        "month": 8,
+        "observed": 26.30827380952381,
+        "estimated": 26.651737945578947
+      },
+      {
+        "month": 9,
+        "observed": 25.548035714285714,
+        "estimated": 25.907406839413955
+      },
+      {
+        "month": 10,
+        "observed": 25.699375,
+        "estimated": 25.792289793463276
+      }
+    ],
+    "rmse": 0.2549660351063335,
+    "note": "Six overlapping calendar-month seasonal means at a third historical location; not a present-day or whole-grid validation."
+  }
+}
