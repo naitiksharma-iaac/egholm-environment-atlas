@@ -9,3 +9,5 @@
 #temperatureLegendControls input[type=range]{width:100%}
 
 .route-list{display:grid;gap:10px;max-height:300px;overflow:auto;margin:16px 0}.route-list label{display:flex;gap:8px;font-size:12px;align-items:start}.route-list strong{font-size:11px;letter-spacing:.06em;margin-top:10px}.route-list input{accent-color:#962c46}.inspect{max-height:calc(100vh - 180px);overflow:auto}.wind-arrow{background:none;border:0}
+
+.farm-designer-link{display:inline-block;background:#245d53;color:#fff;text-decoration:none;padding:10px 14px;border-radius:6px;font-size:13px;font-weight:600}.farm-entry{background:#edf5ef}.farm-entry p{font-size:13px;line-height:1.5}.farm-entry .primary{margin-top:10px}.farm-study-pin span{display:block;background:#fff5d9;border:2px solid #a95525;color:#733d1d;border-radius:20px;padding:5px 9px;font:700 11px sans-serif;white-space:nowrap;box-shadow:0 2px 8px #0003}

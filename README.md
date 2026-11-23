@@ -15,3 +15,11 @@ Interpolated and extrapolated values are estimates, not new observations. Monthl
 ## Hosting
 
 GitHub Pages serves the repository root on `main`; `.nojekyll` preserves the static asset layout. All application assets and data use relative URLs.
+
+## Mussel farm designer
+
+Open [Farm designer](farm/) for the 3D Egholm/Aalborg workbench, seven editable cultivation designs, whole-footprint location screening, mechanical scenarios and dated water evidence. Use the labelled map marker or See farm design to inspect the actual geometry. [Direct farm detail](farm/?view=farm) opens the current browser-local design at true scale.
+
+The atlas marker follows the same browser-local project. Save project / Open exchanges designs with group members; the public site does not synchronise everyone's edits. The initial marker is a study position, not a safe or approved installation. Regional observations, historical oxygen and snapshots are distinguished from contemporary site evidence. See farm/README.txt and the data notebook for limitations.
+
+Validation: `node --test farm/tests/*.test.mjs` (21 mechanics/spatial tests). Existing atlas data and tools are preserved.
