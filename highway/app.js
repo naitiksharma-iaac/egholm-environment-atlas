@@ -2,7 +2,8 @@
 (() => {
   'use strict';
   const E=HighwayEngine,$=id=>document.getElementById(id),canvas=$('drawing'),paper=$('paper'),ctx=canvas.getContext('2d');
-  const storageKey='highway-freehand-v4',paperColor='#fbfaf7',settings={...E.defaults},landSettings={...HighwayLandscape.defaults};
+  const unitsPerMetre=EgholmLandscapeData.source.drawingUnitsPerMetre;
+  const storageKey='highway-freehand-v5',paperColor='#fbfaf7',settings={...E.defaults,unitsPerMetre,pathWidthMetres:3},landSettings={...HighwayLandscape.defaults};
   let landscape=new HighwayLandscape.Landscape(landSettings);
   const environment=()=>landSettings.enabled?landscape:null,exportEnvironment=()=>landSettings.exportCanvas?environment():null;
   let strokes=[],undoStack=[],redoStack=[],active=null,brush=null,pointerId=null,inputTime=0,finishAt=0,demo=null;
@@ -12,9 +13,9 @@
   const local=e=>{const r=canvas.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top};};
   function toast(message){$('toast').textContent=message;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),3200);}
   function remember(){undoStack.push(strokes.slice());if(undoStack.length>30)undoStack.shift();redoStack=[];}
-  function save(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{localStorage.setItem(storageKey,JSON.stringify({version:4,settings,landscape:landSettings,strokes:strokes.map(({paths,...s})=>s)}));}catch{storageWarning=true;toast('Browser storage is full. Export your drawing to keep it.');updateStatus();}},300);}
+  function save(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{localStorage.setItem(storageKey,JSON.stringify({version:5,settings,landscape:landSettings,strokes:strokes.map(({paths,...s})=>s)}));}catch{storageWarning=true;toast('Browser storage is full. Export your drawing to keep it.');updateStatus();}},300);}
   function syncLandscape(){for(const id of ['influence','wetness']){$(id).value=landSettings[id];$(id+'Out').textContent=landSettings[id]+'%';$(id).disabled=!landSettings.enabled;}$('showLandscape').checked=landSettings.enabled;$('exportCanvas').checked=landSettings.exportCanvas;$('landscapeCaption').hidden=!landSettings.enabled;$('landscapeReadout').hidden=!landSettings.enabled;paper.classList.toggle('has-landscape',landSettings.enabled);}
-  function syncUI(){for(const k of ['flow','spread','roadWidth']){$(k).value=settings[k];$(k+'Out').textContent=settings[k]+(k==='flow'?'%':' px');}document.querySelectorAll('[data-ink]').forEach(b=>{b.classList.toggle('active',b.dataset.ink===settings.ink);b.setAttribute('aria-pressed',b.dataset.ink===settings.ink);});}
+  function syncUI(){for(const k of ['flow','spread']){$(k).value=settings[k];$(k+'Out').textContent=settings[k]+(k==='flow'?'%':'');}$('roadWidth').value=settings.pathWidthMetres;$('roadWidthOut').textContent=settings.pathWidthMetres.toFixed(1)+' m';document.querySelectorAll('[data-ink]').forEach(b=>{b.classList.toggle('active',b.dataset.ink===settings.ink);b.setAttribute('aria-pressed',b.dataset.ink===settings.ink);});}
   function updateStatus(){
     const count=strokes.length+(active?1:0);$('emptyState').hidden=!!count||!!demo;
     $('undo').disabled=!undoStack.length||!!active;$('redo').disabled=!redoStack.length||!!active;
@@ -26,12 +27,14 @@
     if(!active){$('liveState').textContent='Ready to follow';$('liveState').dataset.state='ready';}
   }
   function path(points){const p=new Path2D();if(points.length){p.moveTo(...points[0]);for(let i=1;i<points.length;i++)p.lineTo(...points[i]);p.closePath();}return p;}
-  function makePaths(s){const lines=[...s.tracks,...(s.bridges||[])];return [false,true].map(inside=>lines.map((l,i)=>path(E.polygon(l,s.widths?.[i],s.style==='ink'?.9:s.width,inside||s.style!=='outline'?0:.7))));}
-  function renderArtwork(c,items){
+  function makePaths(s){const lines=[...s.tracks,...(s.bridges||[])];return [false,true].map(inside=>lines.map((l,i)=>path(E.outlinePolygon(s,l,i,inside))));}
+  function renderArtwork(c,items,pixelsPerUnit=view.scale){
     const paths=items.map(s=>s.paths||makePaths(s));
-    for(let layer=0;layer<2;layer++)items.forEach((s,i)=>{if(layer&&s.style!=='outline')return;c.fillStyle=layer?paperColor:s.ink;for(const p of paths[i][layer])c.fill(p);});
+    for(let layer=0;layer<2;layer++)items.forEach((s,i)=>{if(layer&&(s.style!=='outline'||s.unitsPerMetre&&s.width*pixelsPerUnit<2.5))return;c.fillStyle=layer?paperColor:s.ink;for(const p of paths[i][layer])c.fill(p);});
   }
   function render(){
+    const metres=[1,2,5,10,20,50,100,200,500,1000,2000].filter(n=>n*unitsPerMetre*view.scale<=90).at(-1)||1;
+    $('mapScale').hidden=!environment();$('scaleLine').style.width=(metres*unitsPerMetre*view.scale)+'px';$('scaleLabel').textContent=metres>=1000?metres/1000+' km':metres+' m';
     ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);ctx.fillStyle=paperColor;ctx.fillRect(0,0,w,h);
     if(environment()){ctx.save();ctx.translate(view.x,view.y);ctx.scale(view.scale,view.scale);const p=world(0,0);landscape.draw(ctx,{minX:p.x,minY:p.y,width:w/view.scale,height:h/view.scale});ctx.restore();}
     if($('showGrid').checked){const step=24*view.scale;if(step>=8){ctx.fillStyle='#d8dccf';for(let x=((view.x%step)+step)%step;x<w;x+=step)for(let y=((view.y%step)+step)%step;y<h;y+=step){ctx.beginPath();ctx.arc(x,y,.75,0,Math.PI*2);ctx.fill();}}}
@@ -50,7 +53,7 @@
   function beginStroke(p){
     if(pointBudget>=100000){toast('Export or clear this drawing before adding more.');return false;}
     if(active)finishStroke();remember();finishAt=0;lastLoop=0;loopUntil=0;
-    brush=new E.FlowBrush(p.x,p.y,settings,environment());active=E.newStroke(settings);active.environment={...landSettings};E.append(active,{a:[p.x,p.y],b:[p.x,p.y],width:settings.roadWidth,lateral:0});
+    brush=new E.FlowBrush(p.x,p.y,settings,environment());active=E.newStroke(settings);active.environment={...landSettings};E.append(active,{a:[p.x,p.y],b:[p.x,p.y],width:active.width,lateral:0});
     last=performance.now();inputTime=last;updateStatus();dirty=true;return true;
   }
   function finishStroke(){
@@ -90,7 +93,7 @@
   function redo(){stopDemo();finishStroke();if(!redoStack.length)return;undoStack.push(strokes.slice());strokes=redoStack.pop();countPoints();save();dirty=true;updateStatus();}
   $('drawTool').onclick=()=>setTool('draw');$('panTool').onclick=()=>setTool('pan');$('undo').onclick=undo;$('redo').onclick=redo;$('fit').onclick=fitDrawing;$('resetView').onclick=resetView;
   $('clear').onclick=()=>{stopDemo();finishStroke();if(!strokes.length)return;remember();strokes=[];pointBudget=0;save();dirty=true;updateStatus();toast('Page cleared. Undo brings it back.');};
-  function adjust(){stopDemo();finishStroke();for(const k of ['flow','spread','roadWidth'])settings[k]=Number($(k).value);syncUI();save();}
+  function adjust(){stopDemo();finishStroke();for(const k of ['flow','spread'])settings[k]=Number($(k).value);settings.pathWidthMetres=Number($('roadWidth').value);syncUI();save();}
   for(const id of ['flow','spread','roadWidth'])$(id).addEventListener('input',adjust);
   document.querySelectorAll('[data-ink]').forEach(b=>b.onclick=()=>{stopDemo();finishStroke();settings.ink=b.dataset.ink;syncUI();save();});
   $('showGrid').onchange=()=>{dirty=true;};
@@ -107,7 +110,7 @@
   function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
   function exportReady(){stopDemo();finishStroke();return strokes.length>0||!!exportEnvironment();}
   $('exportSVG').onclick=()=>{if(!exportReady())return;download(new Blob([E.svgDocument(strokes,exportEnvironment())],{type:'image/svg+xml'}),'highway-freehand.svg');toast('SVG exported — editable vector outlines.');};
-  $('exportPNG').onclick=()=>{if(!exportReady())return;const env=exportEnvironment(),b=E.combinedBounds(strokes,env),pad=Math.max(30,E.maxWidth(strokes)),ww=Math.max(1,b.width+2*pad),hh=Math.max(1,b.height+2*pad),scale=Math.min(2,4096/Math.max(ww,hh)),out=document.createElement('canvas');out.width=Math.ceil(ww*scale);out.height=Math.ceil(hh*scale);const c=out.getContext('2d');c.fillStyle=paperColor;c.fillRect(0,0,out.width,out.height);c.scale(scale,scale);c.translate(-b.minX+pad,-b.minY+pad);if(env)env.draw(c,{minX:b.minX-pad,minY:b.minY-pad,width:ww,height:hh});renderArtwork(c,strokes);if(env){c.font='8px sans-serif';c.fillStyle='#536b64';c.fillText('© OpenStreetMap contributors · ODbL 1.0 · Other landscape layers are illustrative',b.minX,b.maxY+pad-10);}out.toBlob(blob=>{if(blob){download(blob,'highway-freehand.png');toast('PNG exported.');}else toast('Export could not finish. Try SVG.');},'image/png');};
+  $('exportPNG').onclick=()=>{if(!exportReady())return;const env=exportEnvironment(),b=E.combinedBounds(strokes,env),pad=Math.max(30,E.maxWidth(strokes)),ww=Math.max(1,b.width+2*pad),hh=Math.max(1,b.height+2*pad),scale=Math.min(2,4096/Math.max(ww,hh)),out=document.createElement('canvas');out.width=Math.ceil(ww*scale);out.height=Math.ceil(hh*scale);const c=out.getContext('2d');c.fillStyle=paperColor;c.fillRect(0,0,out.width,out.height);c.scale(scale,scale);c.translate(-b.minX+pad,-b.minY+pad);if(env)env.draw(c,{minX:b.minX-pad,minY:b.minY-pad,width:ww,height:hh});renderArtwork(c,strokes,scale);if(env){c.font='8px sans-serif';c.fillStyle='#536b64';c.fillText('© OpenStreetMap contributors · ODbL 1.0 · Other landscape layers are illustrative',b.minX,b.maxY+pad-10);}out.toBlob(blob=>{if(blob){download(blob,'highway-freehand.png');toast('PNG exported.');}else toast('Export could not finish. Try SVG.');},'image/png');};
   $('aboutButton').onclick=()=>$('about').showModal();$('closeAbout').onclick=$('backToDrawing').onclick=()=>$('about').close();
   $('about').addEventListener('click',e=>{if(e.target===$('about')){const r=$('about').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)$('about').close();}});
   document.addEventListener('keydown',e=>{
@@ -128,13 +131,14 @@
     }else if(active&&brush)samples(brush.step(dt));
     if(finishAt&&now>=finishAt&&!brush?.orbit)finishStroke();if(dirty)render();requestAnimationFrame(animate);
   }
-  function validStroke(s){return s&&/^#[0-9a-f]{6}$/i.test(s.ink)&&['outline','ink','ribbon'].includes(s.style)&&Number.isFinite(s.width)&&s.width>=1&&s.width<=18&&Array.isArray(s.tracks)&&s.tracks.length>=1&&s.tracks.length<=3&&Array.isArray(s.bridges)&&[...s.tracks,...s.bridges].every(l=>Array.isArray(l)&&l.length<=100000&&l.every(p=>Array.isArray(p)&&p.length===2&&p.every(n=>Number.isFinite(n)&&Math.abs(n)<1000000)))&&(!s.widths||Array.isArray(s.widths)&&s.widths.length===s.tracks.length&&s.widths.every((ws,i)=>Array.isArray(ws)&&ws.length===s.tracks[i].length&&ws.every(n=>Number.isFinite(n)&&n>0&&n<=150)));}
+  function validStroke(s){return s&&/^#[0-9a-f]{6}$/i.test(s.ink)&&['outline','ink','ribbon'].includes(s.style)&&Number.isFinite(s.width)&&s.width>=.1&&s.width<=18&&(!s.unitsPerMetre||s.unitsPerMetre===unitsPerMetre)&&Array.isArray(s.tracks)&&s.tracks.length>=1&&s.tracks.length<=3&&Array.isArray(s.bridges)&&[...s.tracks,...s.bridges].every(l=>Array.isArray(l)&&l.length<=100000&&l.every(p=>Array.isArray(p)&&p.length===2&&p.every(n=>Number.isFinite(n)&&Math.abs(n)<1000000)))&&(!s.widths||Array.isArray(s.widths)&&s.widths.length===s.tracks.length&&s.widths.every((ws,i)=>Array.isArray(ws)&&ws.length===s.tracks[i].length&&ws.every(n=>Number.isFinite(n)&&n>0&&n<=150)));}
   try{
-    const saved=JSON.parse(localStorage.getItem(storageKey)||localStorage.getItem('highway-freehand-v3')||localStorage.getItem('highway-freehand-v2')||localStorage.getItem('highway-drawing-v1'));
-    if([1,2,3,4].includes(saved?.version)&&Array.isArray(saved.strokes)&&saved.strokes.length<=500&&saved.strokes.every(validStroke)){
-      strokes=saved.strokes;strokes.forEach(s=>{if(!s.loopRule&&s.events){s.events.crossings=s.events.loops||0;s.events.loops=0;}s.paths=makePaths(s);});countPoints();
-      if(saved.version>=2&&saved.settings){for(const k of ['flow','spread','roadWidth'])if(Number.isFinite(saved.settings[k])&&saved.settings[k]>=Number($(k).min)&&saved.settings[k]<=Number($(k).max))settings[k]=saved.settings[k];if(['#333832','#284c69','#a24b36','#5c6850'].includes(saved.settings.ink))settings.ink=saved.settings.ink;}
-      if(saved.version===4&&saved.landscape){for(const k of ['enabled','exportCanvas'])if(typeof saved.landscape[k]==='boolean')landSettings[k]=saved.landscape[k];for(const k of ['influence','wetness'])if(Number.isFinite(saved.landscape[k])&&saved.landscape[k]>=0&&saved.landscape[k]<=100)landSettings[k]=saved.landscape[k];}
+    const saved=JSON.parse(localStorage.getItem(storageKey)||localStorage.getItem('highway-freehand-v4')||localStorage.getItem('highway-freehand-v3')||localStorage.getItem('highway-freehand-v2')||localStorage.getItem('highway-drawing-v1'));
+    if([1,2,3,4,5].includes(saved?.version)&&Array.isArray(saved.strokes)&&saved.strokes.length<=500&&saved.strokes.every(validStroke)){
+      strokes=saved.strokes;strokes.forEach(s=>{if(!s.loopRule&&s.events){s.events.crossings=s.events.loops||0;s.events.loops=0;}E.scaleStroke(s,unitsPerMetre);s.paths=makePaths(s);});countPoints();
+      if(saved.version>=2&&saved.settings){for(const k of ['flow','spread'])if(Number.isFinite(saved.settings[k])&&saved.settings[k]>=Number($(k).min)&&saved.settings[k]<=Number($(k).max))settings[k]=saved.settings[k];if(['#333832','#284c69','#a24b36','#5c6850'].includes(saved.settings.ink))settings.ink=saved.settings.ink;}
+      if(saved.version===5&&Number.isFinite(saved.settings?.pathWidthMetres)&&saved.settings.pathWidthMetres>=1.5&&saved.settings.pathWidthMetres<=6)settings.pathWidthMetres=saved.settings.pathWidthMetres;
+      if(saved.version>=4&&saved.landscape){for(const k of ['enabled','exportCanvas'])if(typeof saved.landscape[k]==='boolean')landSettings[k]=saved.landscape[k];for(const k of ['influence','wetness'])if(Number.isFinite(saved.landscape[k])&&saved.landscape[k]>=0&&saved.landscape[k]<=100)landSettings[k]=saved.landscape[k];}
     }
   }catch{}
   landscape=new HighwayLandscape.Landscape(landSettings);syncUI();syncLandscape();resize();updateStatus();new ResizeObserver(resize).observe(paper);requestAnimationFrame(animate);

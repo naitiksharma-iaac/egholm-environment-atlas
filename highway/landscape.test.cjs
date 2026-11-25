@@ -38,3 +38,18 @@ test('SVG exports support landscape only, combined drawing, and path-only with s
   assert.ok(!/NaN|Infinity|undefined/.test(full));assert.ok(full.indexOf('id="landscape"')<full.indexOf('fill="#333832"'));
   const b=E.combinedBounds([s],env);assert.ok(b.minX<=env.bounds.minX&&b.maxY>=env.bounds.maxY);
 });
+test('metric footprints have a 3 metre default, an 8 metre pocket limit and no exterior outline inflation',()=>{
+  const settings={...E.defaults,unitsPerMetre:.23,pathWidthMetres:3},s=E.newStroke(settings),b=new E.FlowBrush(-320,-75,settings,new L.Landscape());let t=0;
+  for(const p of E.exampleGesture()){b.aim(p.x,p.y,p.time-t);for(const f of b.step(p.time-t))E.append(s,f);t=p.time;}
+  assert.ok(Math.abs(s.width/.23-3)<1e-9);assert.ok(s.widths[0].some(w=>w>s.width));assert.ok(E.maxWidth([s])/.23<=8+1e-9);
+  const outline=E.outlinePolygon(s,[[0,0],[100,0]],2,false),ys=outline.map(p=>p[1]);
+  assert.ok(Math.abs((Math.max(...ys)-Math.min(...ys))/.23-3)<1e-9);
+  for(const m of [1.5,6])assert.ok(E.physicalWidth(150,6,m,.23)<=8*.23);
+});
+test('old oversized drawings shrink once without moving routes or opening loops',()=>{
+  const s=run(new L.Landscape()),tracks=JSON.stringify(s.tracks),loops=JSON.stringify(s.closedLoops);
+  E.scaleStroke(s,.23);assert.equal(JSON.stringify(s.tracks),tracks);assert.equal(JSON.stringify(s.closedLoops),loops);
+  assert.ok(Math.abs(s.width/.23-3)<1e-9);assert.ok(E.maxWidth([s])/.23<=8+1e-9);
+  const first=JSON.stringify(s);E.scaleStroke(s,.23);assert.equal(JSON.stringify(s),first);
+  assert.ok(!/NaN|Infinity/.test(E.svgDocument([s])));
+});

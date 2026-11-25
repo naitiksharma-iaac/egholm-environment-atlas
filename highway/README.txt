@@ -1,4 +1,4 @@
-HIGHWAY — FREEHAND PATHS / VERSION 4: LANDSCAPE CANVAS
+HIGHWAY — FREEHAND PATHS / VERSION 5: METRIC PATH WIDTHS
 
 Public: https://naitiksharma-iaac.github.io/egholm-environment-atlas/highway/
 Independent interaction study inspired by Jeune Homme's Highway designer:
@@ -17,6 +17,19 @@ a closed orbit before it resumes following. Slow gentle curves increase the firs
 trail's width into a pocket. This is the 2D footprint of the voliere exploration;
 it has no height, programme or structure. Version 4 adds a coloured drawing
 environment based on the Egholm outline and vegetation in the project data.
+
+METRIC PATH WIDTHS
+The default path footprint is 3 m, adjustable from 1.5 to 6 m. Automatic pockets
+are capped at 8 m. Dimensions use the map transform (0.23 drawing units/metre),
+not screen pixels. The previous 6-unit default represented about 26 m before
+its exterior outline; that scale mismatch is corrected. Outline edges now sit
+inside metric footprints and cannot increase their width. At overview zoom the
+paths use solid ink for legibility without enlarging the geometry; zoom in to
+see outlined footprints. The scale indicator follows zoom. SVG/PNG use the same
+physical footprint polygons. These are design settings, not compliance claims.
+Old strokes are converted on load: width ratios are retained up to the 8 m cap;
+centreline routes and loops stay unchanged. Original browser-storage keys remain
+as backups. Migration is applied once and does not progressively shrink paths.
 
 LANDSCAPE CANVAS
 The canvas is on by default. Water/coast and woodland repel; illustrative wet
@@ -54,7 +67,7 @@ scenarios. They are not surveyed land-cover boundaries, flood predictions,
 protected-habitat mappings or a proposed construction layout. No new water data
 is implied. The mainland is not part of this isolated drawing experiment.
 
-Canvas settings and ink save under highway-freehand-v4; v3, v2 and v1 drawings
+Canvas settings and ink save under highway-freehand-v5; v4, v3, v2 and v1 drawings
 load as fallbacks without deleting their old storage keys. SVG/PNG can export
 the landscape with ink, the landscape alone, or ink alone. "Include landscape
 canvas" controls export only. A mixed drawing can contain strokes made under
@@ -95,8 +108,8 @@ Wheel zooms; Space + drag pans; F fits; Ctrl/Command Z undoes; Shift Z redoes.
 Clear is undoable. Esc stops the example. Mouse, touch and stylus are supported.
 PNG exports have a maximum longest side of 4096 pixels. SVG preserves vectors.
 
-Drawings save locally under highway-freehand-v4. Existing v3, v2 and v1 drawings
-load when no v4 drawing exists; their original storage keys are left intact.
+Drawings save locally under highway-freehand-v5. Existing v4, v3, v2 and v1 drawings
+load when no v5 drawing exists; their original storage keys are left intact.
 No drawings are uploaded. Browser storage is scoped to this browser/origin.
 Exports are the portable copy; clearing browser storage removes local drafts.
 

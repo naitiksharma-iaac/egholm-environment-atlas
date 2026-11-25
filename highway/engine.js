@@ -3,6 +3,14 @@
   'use strict';
   const PAPER='#fbfaf7',clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),wrap=a=>Math.atan2(Math.sin(a),Math.cos(a));
   const defaults={flow:65,spread:70,roadWidth:6,ink:'#333832'};
+  // Gesture dynamics keep their own units. Physical footprint widths use map units/metre.
+  function physicalWidth(width,base,metres,units){return Math.min(8,metres*Math.max(1,width/base))*units;}
+  function scaleStroke(stroke,units,metres=3){
+    if(stroke.unitsPerMetre)return stroke;
+    const oldWidth=stroke.width;stroke.width=metres*units;
+    if(stroke.widths)stroke.widths=stroke.widths.map(ws=>ws.map(w=>physicalWidth(w,oldWidth,metres,units)));
+    stroke.unitsPerMetre=units;delete stroke.paths;return stroke;
+  }
   class FlowBrush{
     constructor(x,y,settings={},environment=null){
       this.environment=environment?.strength>0?environment:null;this.engaged=false;this.zone='Open ground';
@@ -75,7 +83,8 @@
         this.width+=(this.settings.roadWidth+span*(.58*gentle+.28*clearing)*slow-this.width)*(1-Math.exp(-h*7));
         const lateral=Math.abs((this.b.x-this.a.x)*nx+(this.b.y-this.a.y)*ny);
         this.intent=this.orbit?'Looping':this.width>this.settings.roadWidth+5?'Pocket':lateral>this.settings.roadWidth*1.5?'Splitting':bend>.025?'Curling':bend>.004?'Curving':'Straight';
-        frames.push({a:[this.a.x,this.a.y],b:[this.b.x,this.b.y],width:this.width,lateral,intent:this.intent,loopStart,loopEnd});
+        const footprint=this.settings.unitsPerMetre?physicalWidth(this.width,this.settings.roadWidth,this.settings.pathWidthMetres||3,this.settings.unitsPerMetre):this.width;
+        frames.push({a:[this.a.x,this.a.y],b:[this.b.x,this.b.y],width:footprint,lateral,intent:this.intent,loopStart,loopEnd});
       }
       return frames;
     }
@@ -85,7 +94,7 @@
     const qx=c[0]-a[0],qy=c[1]-a[1],t=(qx*sy-qy*sx)/den,u=(qx*ry-qy*rx)/den;
     return t>0&&t<=1&&u>=0&&u<=1?[a[0]+t*rx,a[1]+t*ry]:null;
   }
-  function newStroke(settings){return {tracks:[[],[]],widths:[[],[]],bridges:[],closedLoops:[],loopRule:1,width:settings.roadWidth,ink:settings.ink,style:'outline',events:{loops:0,splits:0,pockets:0,crossings:0},_split:false,_pocket:false,_lastCross:null};}
+  function newStroke(settings){const s={tracks:[[],[]],widths:[[],[]],bridges:[],closedLoops:[],loopRule:1,width:settings.roadWidth,ink:settings.ink,style:'outline',events:{loops:0,splits:0,pockets:0,crossings:0},_split:false,_pocket:false,_lastCross:null};return settings.unitsPerMetre?scaleStroke(s,settings.unitsPerMetre,settings.pathWidthMetres||3):s;}
   function signedArea(points){let area=0;for(let i=1;i<points.length;i++)area+=points[i-1][0]*points[i][1]-points[i][0]*points[i-1][1];return area/2;}
   function append(stroke,sample){
     for(let k=0;k<2;k++){
@@ -107,8 +116,8 @@
     }
     if(sample.lateral>stroke.width*2&&!stroke._split){stroke.events.splits++;stroke._split=true;}
     if(sample.lateral<stroke.width*.6)stroke._split=false;
-    if(sample.width>stroke.width+8&&!stroke._pocket){stroke.events.pockets++;stroke._pocket=true;}
-    if(sample.width<stroke.width+3)stroke._pocket=false;
+    if(sample.width>(stroke.unitsPerMetre?stroke.width*1.5:stroke.width+8)&&!stroke._pocket){stroke.events.pockets++;stroke._pocket=true;}
+    if(sample.width<(stroke.unitsPerMetre?stroke.width*1.2:stroke.width+3))stroke._pocket=false;
   }
   function finish(stroke){
     // Rejoin remaining follower lag at release using a short tangent-aware curve.
@@ -131,6 +140,12 @@
     return [...left,...cap(end,line.at(-2)||[end[0]-1,end[1]],(widths?.at(-1)??width)/2+pad),...right.reverse(),...cap(start,line[1]||[start[0]+1,start[1]],(widths?.[0]??width)/2+pad)];
   }
   const linesOf=s=>[...s.tracks,...(s.bridges||[])];
+  function outlinePolygon(s,line,i,interior){
+    // Put the outline INSIDE a metric footprint: display borders cannot add metres.
+    const width=(s.style==='ink'&&!s.unitsPerMetre) ? .9 : s.width;
+    const pad=s.unitsPerMetre?(interior?-Math.min(s.width*.18,s.unitsPerMetre*.2):0):(interior||s.style!=='outline'?0:.7);
+    return polygon(line,s.widths?.[i],width,pad);
+  }
   function bounds(strokes){let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
     for(const s of strokes)for(const line of linesOf(s))for(const p of line){minX=Math.min(minX,p[0]);minY=Math.min(minY,p[1]);maxX=Math.max(maxX,p[0]);maxY=Math.max(maxY,p[1]);}
     return Number.isFinite(minX)?{minX,minY,maxX,maxY,width:maxX-minX,height:maxY-minY}:null;
@@ -142,7 +157,7 @@
     let svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x.toFixed(2)} ${y.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)}" width="${Math.ceil(w)}" height="${Math.ceil(h)}"><title>Highway freehand drawing</title><desc>Two-dimensional freehand path study. No engineering or site assessment.</desc><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${PAPER}"/>`;
     if(environment)svg+=environment.svg({minX:x,minY:y,width:w,height:h});
     for(const interior of [false,true])for(const s of strokes){if(interior&&s.style!=='outline')continue;
-      linesOf(s).forEach((line,i)=>{if(line.length<2)return;const width=s.style==='ink'?.9:s.width,points=polygon(line,s.widths?.[i],width,interior||s.style!=='outline'?0:.7);svg+=`<path d="${pathData(points)}Z" fill="${interior?PAPER:s.ink}"/>`;});
+      linesOf(s).forEach((line,i)=>{if(line.length<2)return;const points=outlinePolygon(s,line,i,interior);svg+=`<path d="${pathData(points)}Z" fill="${interior?PAPER:s.ink}"/>`;});
     }
     if(environment)svg+=`<text x="${b.minX}" y="${b.maxY+pad-10}" font-family="sans-serif" font-size="8" fill="#536b64">© OpenStreetMap contributors · ODbL 1.0 · Other landscape layers are illustrative</text>`;
     return svg+'</svg>';
@@ -158,6 +173,6 @@
     for(let i=1;i<=100;i++)add(75+2.3*i,140-i*1.5,.012);
     return pts;
   }
-  const api={FlowBrush,defaults,newStroke,append,finish,polygon,bounds,combinedBounds,pathData,maxWidth,svgDocument,intersect,signedArea,exampleGesture};
+  const api={FlowBrush,defaults,newStroke,append,finish,polygon,outlinePolygon,physicalWidth,scaleStroke,bounds,combinedBounds,pathData,maxWidth,svgDocument,intersect,signedArea,exampleGesture};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.HighwayEngine=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
