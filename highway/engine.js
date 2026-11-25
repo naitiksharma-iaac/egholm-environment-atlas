@@ -4,7 +4,8 @@
   const PAPER='#fbfaf7',clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),wrap=a=>Math.atan2(Math.sin(a),Math.cos(a));
   const defaults={flow:65,spread:70,roadWidth:6,ink:'#333832'};
   class FlowBrush{
-    constructor(x,y,settings={}){
+    constructor(x,y,settings={},environment=null){
+      this.environment=environment?.strength>0?environment:null;this.engaged=false;this.zone='Open ground';
       this.settings={...defaults,...settings};this.target={x,y};this.lastInput={x,y};
       this.a={x,y,vx:0,vy:0};this.b={x,y,vx:0,vy:0};this.heading=0;this.hasHeading=false;
       this.speed=0;this.turn=0;this.turnTarget=0;this.speedTarget=0;this.age=0;this.accumulator=0;
@@ -16,6 +17,7 @@
       if(!Number.isFinite(x)||!Number.isFinite(y))return;
       const dx=x-this.lastInput.x,dy=y-this.lastInput.y,d=Math.hypot(dx,dy);this.target={x,y};this.age=0;
       if(d>.04){
+        this.engaged=true;
         const heading=Math.atan2(dy,dx),delta=this.hasHeading?wrap(heading-this.heading):0,mix=1-Math.exp(-d/12);
         this.turnTarget+=(clamp(delta/Math.max(d,1),-.12,.12)-this.turnTarget)*mix;
         this.speedTarget=clamp(d/Math.max(.002,dt),0,1800);this.heading=heading;this.hasHeading=true;this.lastInput={x,y};
@@ -41,13 +43,18 @@
         const f=this.settings.flow/100,span=this.settings.spread,nx=-Math.sin(this.heading),ny=Math.cos(this.heading);
         const offset=span*Math.tanh(this.turn*32)*clamp(this.speed/45,0,1);
         const integrate=(p,tx,ty,k,d)=>{p.vx+=(k*(tx-p.x)-d*p.vx)*h;p.vy+=(k*(ty-p.y)-d*p.vy)*h;p.x+=p.vx*h;p.y+=p.vy*h;};
-        integrate(this.a,this.target.x,this.target.y,700,49);
+        const env=this.engaged?this.environment:null;
+        const ea=env?env.steer(this.target.x,this.target.y,this.heading,.85):null;
+        const eb=env?env.steer(this.target.x+nx*offset,this.target.y+ny*offset,this.heading,1.15):null;
+        this.zone=ea?.zone||'Open ground';
+        integrate(this.a,ea?.x??this.target.x,ea?.y??this.target.y,700/(1+(ea?.resistance||0)*(env?.strength||0)),49);
         const k=95-60*f,d=2*Math.sqrt(k)*(.9-.48*f);let loopStart=false,loopEnd=false;
         if(this.pendingLoop&&!this.orbit){
           this.pendingLoop=false;loopStart=true;
           const velocity=Math.hypot(this.b.vx,this.b.vy),angle=velocity>8?Math.atan2(this.b.vy,this.b.vx):this.heading;
-          const tx=Math.cos(angle),ty=Math.sin(angle),side=(this.a.x-this.b.x)*(-ty)+(this.a.y-this.b.y)*tx>0?-1:1;
+          const tx=Math.cos(angle),ty=Math.sin(angle);let side=(this.a.x-this.b.x)*(-ty)+(this.a.y-this.b.y)*tx>0?-1:1;
           const rx=clamp(20+.075*this.speed+span*.2,this.settings.roadWidth*3.2,Math.max(90,this.settings.roadWidth*4));
+          if(env){const cost=s=>env.sample(this.b.x-ty*s*rx,this.b.y+tx*s*rx).resistance;if(cost(side)>cost(-side)+.15)side=-side;}
           this.orbit={anchor:[this.b.x,this.b.y],tx,ty,side,rx,ry:rx*(.68+.23*Math.min(1,Math.abs(this.turnMemory)/1.8)),elapsed:0,duration:.65+rx*.003,speed:velocity};
           this.turnMemory=0;this.turnDistance=0;this.loopTravel=0;
         }
@@ -55,15 +62,17 @@
           const o=this.orbit;if(!loopStart)o.elapsed=Math.min(o.duration,o.elapsed+h);
           const angle=o.elapsed/o.duration*Math.PI*2,u=o.rx*Math.sin(angle),v=o.side*o.ry*(1-Math.cos(angle));
           this.b.x=o.anchor[0]+o.tx*u-o.ty*v;this.b.y=o.anchor[1]+o.ty*u+o.tx*v;
+          if(env){const f=env.sample(this.b.x,this.b.y),fade=Math.sin(angle/2)**2,scale=Math.min(o.rx,o.ry)*.2*env.strength*fade;this.b.x+=f.fx*scale;this.b.y+=f.fy*scale;}
           if(o.elapsed>=o.duration){
             this.b.x=o.anchor[0];this.b.y=o.anchor[1];this.b.vx=o.tx*o.speed;this.b.vy=o.ty*o.speed;
             loopEnd=true;this.orbit=null;this.turnMemory=0;this.turnDistance=0;this.loopTravel=0;
           }
-        }else integrate(this.b,this.target.x+nx*offset,this.target.y+ny*offset,k,d);
+        }else integrate(this.b,eb?.x??this.target.x+nx*offset,eb?.y??this.target.y+ny*offset,k/(1+(eb?.resistance||0)*(env?.strength||0)),d);
         // Slow, gentle curves widen; a stationary pointer never creates a pocket.
         const bend=Math.abs(this.turn),gentle=clamp(bend/.008,0,1)*clamp((.06-bend)/.035,0,1);
         const slow=clamp((170-this.speedTarget)/115,0,1)*clamp((this.speedTarget-8)/25,0,1)*freshness;
-        this.width+=(this.settings.roadWidth+span*.58*gentle*slow-this.width)*(1-Math.exp(-h*7));
+        const clearing=(ea?.pocket||0)*(env?.strength||0);
+        this.width+=(this.settings.roadWidth+span*(.58*gentle+.28*clearing)*slow-this.width)*(1-Math.exp(-h*7));
         const lateral=Math.abs((this.b.x-this.a.x)*nx+(this.b.y-this.a.y)*ny);
         this.intent=this.orbit?'Looping':this.width>this.settings.roadWidth+5?'Pocket':lateral>this.settings.roadWidth*1.5?'Splitting':bend>.025?'Curling':bend>.004?'Curving':'Straight';
         frames.push({a:[this.a.x,this.a.y],b:[this.b.x,this.b.y],width:this.width,lateral,intent:this.intent,loopStart,loopEnd});
@@ -128,14 +137,17 @@
   }
   const pathData=points=>points.map((p,i)=>(i?'L':'M')+p[0].toFixed(2)+' '+p[1].toFixed(2)).join(' ');
   const maxWidth=strokes=>strokes.reduce((m,s)=>Math.max(m,s.width,...(s.widths||[]).map(ws=>ws.reduce((n,w)=>Math.max(n,w),0))),0);
-  function svgDocument(strokes){
-    const b=bounds(strokes);if(!b)return null;const pad=Math.max(30,maxWidth(strokes)),x=b.minX-pad,y=b.minY-pad,w=Math.max(1,b.width+2*pad),h=Math.max(1,b.height+2*pad);
+  function svgDocument(strokes,environment=null){
+    const b=combinedBounds(strokes,environment);if(!b)return null;const pad=Math.max(30,maxWidth(strokes)),x=b.minX-pad,y=b.minY-pad,w=Math.max(1,b.width+2*pad),h=Math.max(1,b.height+2*pad);
     let svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x.toFixed(2)} ${y.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)}" width="${Math.ceil(w)}" height="${Math.ceil(h)}"><title>Highway freehand drawing</title><desc>Two-dimensional freehand path study. No engineering or site assessment.</desc><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${PAPER}"/>`;
+    if(environment)svg+=environment.svg({minX:x,minY:y,width:w,height:h});
     for(const interior of [false,true])for(const s of strokes){if(interior&&s.style!=='outline')continue;
       linesOf(s).forEach((line,i)=>{if(line.length<2)return;const width=s.style==='ink'?.9:s.width,points=polygon(line,s.widths?.[i],width,interior||s.style!=='outline'?0:.7);svg+=`<path d="${pathData(points)}Z" fill="${interior?PAPER:s.ink}"/>`;});
     }
+    if(environment)svg+=`<text x="${b.minX}" y="${b.maxY+pad-10}" font-family="sans-serif" font-size="8" fill="#536b64">© OpenStreetMap contributors · ODbL 1.0 · Other landscape layers are illustrative</text>`;
     return svg+'</svg>';
   }
+  function combinedBounds(strokes,environment=null){const a=bounds(strokes),b=environment?.bounds;if(!b)return a;if(!a)return {...b};const minX=Math.min(a.minX,b.minX),minY=Math.min(a.minY,b.minY),maxX=Math.max(a.maxX,b.maxX),maxY=Math.max(a.maxY,b.maxY);return {minX,minY,maxX,maxY,width:maxX-minX,height:maxY-minY};}
   // Pointer coordinates only: the demonstration has no special shape-generation code.
   function exampleGesture(){
     const pts=[];let time=0;const add=(x,y,dt=.016)=>{time+=dt;pts.push({x,y,time});};
@@ -146,6 +158,6 @@
     for(let i=1;i<=100;i++)add(75+2.3*i,140-i*1.5,.012);
     return pts;
   }
-  const api={FlowBrush,defaults,newStroke,append,finish,polygon,bounds,pathData,maxWidth,svgDocument,intersect,signedArea,exampleGesture};
+  const api={FlowBrush,defaults,newStroke,append,finish,polygon,bounds,combinedBounds,pathData,maxWidth,svgDocument,intersect,signedArea,exampleGesture};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.HighwayEngine=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

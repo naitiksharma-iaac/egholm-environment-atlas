@@ -5,12 +5,12 @@
   <meta name="theme-color" content="#f5f3ed">
   <title>Highway — freehand paths</title>
   <meta name="description" content="Draw freely. Straight paths, loops, branches and pockets emerge from your movement. A two-dimensional drawing experiment.">
-  <link rel="stylesheet" href="style.css?v=loops3">
+  <link rel="stylesheet" href="style.css?v=canvas4">
 </head>
 <body>
   <header class="masthead">
     <a class="wordmark" href="./" aria-label="Highway drawing instrument"><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><path d="M4 28V13C4 3 17 2 17 12s-8 10-8 3 17-8 17 4v9M8 28V13C8 7 13 7 13 12s0 7 0 3 9-3 9 4v9" fill="none" stroke="currentColor" stroke-width="1.3"/></svg><span>highway<span class="wordmark-dot">.</span></span></a>
-    <div class="masthead-description">A FREEHAND PATH EXPERIMENT<span>One gesture. Many possible paths.</span></div>
+    <div class="masthead-description">A FREEHAND PATH EXPERIMENT<span>Your movement meets the landscape.</span></div>
     <button class="text-button" id="aboutButton">About this experiment <span>↗</span></button>
   </header>
 
@@ -34,15 +34,25 @@
         <div id="emptyState"><span class="eyebrow">JUST FOLLOW YOUR CURIOSITY</span><h1>Let the path<br>unfold.</h1><p>Drag, turn and double back.<br>Loops and branches follow your movement.</p><button id="emptyDemo" class="demo-link">Watch it unfold <span>↗</span></button><svg viewBox="0 0 130 60" aria-hidden="true"><path d="M8 8c15 2 22 35 45 29 29-8 10-43-9-29S53 70 114 41m-11-6 11 6-4 12" fill="none" stroke="currentColor" stroke-width="1.1"/></svg></div>
         <div id="demoBadge" hidden><i></i> Drawing demonstration <button id="stopDemo">Stop</button></div>
         <div id="canvasNote" hidden>Preview only — press and drag to leave a trail.</div>
+        <div id="landscapeCaption"><b>EGHOLM / LANDSCAPE CANVAS</b><span>2D drawing study · scenario layers</span></div>
+        <div id="landscapeReadout"><span id="zoneStatus">Move to explore</span><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a></div>
       </div>
       <footer class="canvas-footer"><span id="strokeStatus" role="status">A blank page. All yours.</span><span class="gesture-hint">DRAG TO DRAW <i>·</i> WHEEL TO ZOOM <i>·</i> SPACE TO PAN</span><span id="coordinateStatus">— / —</span></footer>
     </section>
 
     <aside class="settings" id="settingsPanel" aria-label="Drawing settings">
       <div class="settings-heading"><span class="eyebrow">FREEHAND · AUTOMATIC</span><span class="index-label">2D /</span></div>
-      <h2>Your movement.<br>The path responds.</h2>
+      <h2>Draw with<br>the landscape.</h2>
       <div class="live-response"><i></i><span id="liveState">Ready to follow</span><span class="live-label">LIVE</span></div>
-      <div class="behaviour-guide"><p><b>Go straight</b><span>Traces flow together.</span></p><p><b>Curve and return</b><span>Paths separate and rejoin.</span></p><p><b>Make a sustained turn</b><span>The following trail closes a loop.</span></p><p><b>Slow down through a curve</b><span>A wider pocket opens.</span></p></div>
+      <section class="environment-controls" aria-label="Landscape canvas">
+        <label class="check-label landscape-switch"><input type="checkbox" id="showLandscape" checked> Landscape canvas</label>
+        <p class="environment-intro">Keep drawing freely. The ground adds another influence.</p>
+        <div class="landscape-legend"><p><i style="--zone:#dce9e7"></i><b>Water & coast</b><span>Resist / turn inland</span></p><p><i style="--zone:#afceca"></i><b>Wet patches</b><span>Push paths outward</span></p><p><i style="--zone:#b6c7a6"></i><b>Woodland</b><span>Resist / divert</span></p><p><i style="--zone:#f3eed7"></i><b>Open clearings</b><span>Attract / widen</span></p><p><i style="--zone:#b6a16d"></i><b>Dyke lines</b><span>Attract / align</span></p></div>
+        <label class="range-label" for="influence">Landscape influence <output id="influenceOut">65%</output></label><input id="influence" type="range" min="0" max="100" value="65"><p class="field-hint">0 = gesture alone · 100 = stronger steering</p>
+        <label class="range-label" for="wetness">Wetness scenario <output id="wetnessOut">45%</output></label><input id="wetness" type="range" min="0" max="100" value="45"><p class="field-hint">Expands wet patches. No flood prediction.</p>
+        <p class="environment-note">Changes affect new strokes. Existing ink stays.<br>Shoreline & vegetation: project map data. Other colours, puddles, clearings & dykes: illustrative.</p>
+      </section>
+      <details class="tuning"><summary>How gestures behave</summary><div class="behaviour-guide"><p><b>Go straight</b><span>Traces flow together.</span></p><p><b>Curve and return</b><span>Paths separate and rejoin.</span></p><p><b>Make a sustained turn</b><span>The following trail closes a loop.</span></p><p><b>Slow down through a curve</b><span>A wider pocket opens.</span></p></div></details>
       <p class="drawing-stats" id="drawingStats">0 closed loops · 0 separations · 0 pockets</p>
       <details class="tuning"><summary>Adjust the feel <span>Optional</span></summary>
       <label class="range-label" for="flow">Flow <output id="flowOut">65%</output></label><input id="flow" type="range" min="0" max="100" value="65"><p class="field-hint">Higher values let the following trail swing further.</p>
@@ -52,12 +62,12 @@
       <div class="setting-row"><span>Ink colour</span><div class="swatches" role="group" aria-label="Ink colour"><button data-ink="#333832" style="--swatch:#333832" aria-label="Charcoal ink" aria-pressed="true" class="active"></button><button data-ink="#284c69" style="--swatch:#284c69" aria-label="Blue ink" aria-pressed="false"></button><button data-ink="#a24b36" style="--swatch:#a24b36" aria-label="Terracotta ink" aria-pressed="false"></button><button data-ink="#5c6850" style="--swatch:#5c6850" aria-label="Olive ink" aria-pressed="false"></button></div></div>
       <label class="check-label"><input type="checkbox" id="showGrid"> Show dot grid</label>
       <button id="demo" class="primary-button">↗ Watch a freehand example</button>
-      <div class="export-block"><div class="eyebrow">KEEP YOUR DRAWING</div><div class="export-actions"><button id="exportSVG" disabled>SVG <span>↓</span></button><button id="exportPNG" disabled>PNG <span>↓</span></button></div><p>SVG keeps the editable path outlines.</p></div>
+      <div class="export-block"><div class="eyebrow">KEEP YOUR DRAWING</div><label class="check-label"><input type="checkbox" id="exportCanvas" checked> Include landscape canvas</label><div class="export-actions"><button id="exportSVG" disabled>SVG <span>↓</span></button><button id="exportPNG" disabled>PNG <span>↓</span></button></div><p>SVG keeps the editable path outlines.</p></div>
       <div class="shortcuts"><b>A few useful moves</b><p><kbd>Space</kbd> Drag to pan<br><kbd>Wheel</kbd> Zoom the page<br><kbd>F</kbd> Fit your drawing<br><kbd>Ctrl / ⌘ Z</kbd> Undo a stroke<br><kbd>Esc</kbd> Stop the example</p></div>
       <p class="credit">An independent interaction study after <a href="https://www.instagram.com/reel/DXz91ltIGps/" target="_blank" rel="noopener">Jeune Homme’s Highway designer ↗</a></p>
     </aside>
   </main>
   <div id="toast" role="status"></div>
-  <dialog id="about"><div class="dialog-top"><span class="eyebrow">ABOUT THE EXPERIMENT</span><button id="closeAbout" aria-label="Close about">×</button></div><h2>One gesture.<br>Many possible paths.</h2><p>Two independent trails follow your pointer with different amounts of inertia. Steady movement brings them together; changes of direction separate them. Sustained turns automatically send the following trail around a loop that returns to its entry point. Slow, gentle curves widen into pockets.</p><p>The pocket is a 2D footprint for exploring your volière idea. This version is entirely a drawing study. Crossings are visual joins, not an engineered route network.</p><p>An independent experiment inspired by <a href="https://www.instagram.com/reel/DXz91ltIGps/" target="_blank" rel="noopener">Jeune Homme’s reel</a>, using our own motion rules. The example supplies open straight runs and bends to the same engine you use; it does not trace circles.</p><p>Your drawing stays in this browser. Earlier drawings are retained. SVG or PNG keeps a copy; clear can be undone. Optional adjustments affect new strokes.</p><button id="backToDrawing" class="primary-button">Back to the page</button></dialog>
-  <script src="engine.js?v=loops3"></script><script src="app.js?v=loops3"></script>
+  <dialog id="about"><div class="dialog-top"><span class="eyebrow">ABOUT THE EXPERIMENT</span><button id="closeAbout" aria-label="Close about">×</button></div><h2>One gesture.<br>Many possible paths.</h2><p>Two independent trails follow your pointer with different amounts of inertia. Steady movement brings them together; changes of direction separate them. Sustained turns automatically send the following trail around a loop that returns to its entry point. Slow, gentle curves widen into pockets.</p><p>The landscape adds soft steering: water and woodland resist, clearings attract and widen, and dyke lines encourage alignment. Shoreline and vegetation come from existing project map data; ground colours, wet patches, clearings and dyke lines are illustrative. Influence changes steering strength; Wetness expands the scenario patches. These are drawing forces, not protected-area rules or flood predictions. Old strokes keep their geometry when you change the canvas.</p><p>The pocket is a 2D footprint for exploring your volière idea. This version is entirely a drawing study. Crossings are visual joins, not an engineered route network.</p><p>An independent experiment inspired by <a href="https://www.instagram.com/reel/DXz91ltIGps/" target="_blank" rel="noopener">Jeune Homme’s reel</a>, using our own motion rules. The example supplies open straight runs and bends to the same engine you use; it does not trace circles.</p><p>Your drawing stays in this browser. Earlier drawings are retained. SVG or PNG keeps a copy; clear can be undone. Optional adjustments affect new strokes.</p><button id="backToDrawing" class="primary-button">Back to the page</button></dialog>
+  <script src="landscape-data.js?v=canvas4"></script><script src="landscape.js?v=canvas4"></script><script src="engine.js?v=canvas4"></script><script src="app.js?v=canvas4"></script>
 </body></html>
