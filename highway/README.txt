@@ -95,11 +95,11 @@ Wheel zooms; Space + drag pans; F fits; Ctrl/Command Z undoes; Shift Z redoes.
 Clear is undoable. Esc stops the example. Mouse, touch and stylus are supported.
 PNG exports have a maximum longest side of 4096 pixels. SVG preserves vectors.
 
-Drawings save locally under highway-freehand-v3. Existing v2 and v1 drawings load
-when no v3 drawing exists; their original browser-storage keys are left intact.
+Drawings save locally under highway-freehand-v4. Existing v3, v2 and v1 drawings
+load when no v4 drawing exists; their original storage keys are left intact.
 No drawings are uploaded. Browser storage is scoped to this browser/origin.
 Exports are the portable copy; clearing browser storage removes local drafts.
 
 This update touches only /highway/ in the existing public repository.
-Tests: node --test engine.test.cjs
+Tests: node --test engine.test.cjs landscape.test.cjs
 Syntax: node --check app.js
