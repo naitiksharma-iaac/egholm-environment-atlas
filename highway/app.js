@@ -3,7 +3,7 @@
   'use strict';
   const E=HighwayEngine,$=id=>document.getElementById(id),canvas=$('drawing'),paper=$('paper'),ctx=canvas.getContext('2d');
   const unitsPerMetre=EgholmLandscapeData.source.drawingUnitsPerMetre;
-  const storageKey='highway-freehand-v6',paperColor='#fbfaf7',settings={...E.defaults,unitsPerMetre,pathWidthMetres:3},landSettings={...HighwayLandscape.defaults};
+  const storageKey='highway-freehand-v7',paperColor='#fbfaf7',settings={...E.defaults,unitsPerMetre,pathWidthMetres:3},landSettings={...HighwayLandscape.defaults};
   let landscape=new HighwayLandscape.Landscape(landSettings);
   const environment=()=>landSettings.enabled?landscape:null,exportEnvironment=()=>landSettings.exportCanvas?environment():null;
   let strokes=[],undoStack=[],redoStack=[],active=null,brush=null,pointerId=null,inputTime=0,finishAt=0,demo=null;
@@ -13,13 +13,13 @@
   const local=e=>{const r=canvas.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top};};
   function toast(message){$('toast').textContent=message;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),3200);}
   function remember(){undoStack.push(strokes.slice());if(undoStack.length>30)undoStack.shift();redoStack=[];}
-  function save(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{localStorage.setItem(storageKey,JSON.stringify({version:6,settings,landscape:landSettings,strokes:strokes.map(({paths,...s})=>s)}));}catch{storageWarning=true;toast('Browser storage is full. Export your drawing to keep it.');updateStatus();}},300);}
+  function save(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{localStorage.setItem(storageKey,JSON.stringify({version:7,settings,landscape:landSettings,strokes:strokes.map(({paths,...s})=>s)}));}catch{storageWarning=true;toast('Browser storage is full. Export your drawing to keep it.');updateStatus();}},300);}
   function syncLandscape(){for(const id of ['influence','wetness']){$(id).value=landSettings[id];$(id+'Out').textContent=landSettings[id]+'%';$(id).disabled=!landSettings.enabled;}$('showLandscape').checked=landSettings.enabled;$('exportCanvas').checked=landSettings.exportCanvas;$('landscapeCaption').hidden=!landSettings.enabled;$('landscapeReadout').hidden=!landSettings.enabled;paper.classList.toggle('has-landscape',landSettings.enabled);}
   function syncUI(){for(const k of ['flow','spread']){$(k).value=settings[k];$(k+'Out').textContent=settings[k]+(k==='flow'?'%':'');}$('roadWidth').value=settings.pathWidthMetres;$('roadWidthOut').textContent=settings.pathWidthMetres.toFixed(1)+' m';document.querySelectorAll('[data-ink]').forEach(b=>{b.classList.toggle('active',b.dataset.ink===settings.ink);b.setAttribute('aria-pressed',b.dataset.ink===settings.ink);});}
   function updateStatus(){
     const count=strokes.length+(active?1:0);$('emptyState').hidden=!!count||!!demo;
     $('undo').disabled=!undoStack.length||!!active;$('redo').disabled=!redoStack.length||!!active;
-    $('clear').disabled=!count;$('refine').disabled=!strokes.some(s=>!s.routeRule)||!!active;$('exportSVG').disabled=!count&&!exportEnvironment();$('exportPNG').disabled=!count&&!exportEnvironment();
+    $('clear').disabled=!count;$('refine').disabled=!strokes.some(s=>(s.routeRule||0)<2)||!!active;$('exportSVG').disabled=!count&&!exportEnvironment();$('exportPNG').disabled=!count&&!exportEnvironment();
     $('strokeStatus').textContent=demo?'Following a freehand gesture…':active?'Drawing freely…':count?count+' stroke'+(count===1?'':'s')+(storageWarning?' · export to keep':' · saved in this browser'):landSettings.enabled?'Move across the landscape.':'A blank page. All yours.';
     $('demoBadge').hidden=!demo;$('demo').textContent=demo?'Stop the example':'↗ Watch a freehand example';$('resetView').textContent=Math.round(view.scale*100)+'%';
     const totals={loops:0,splits:0,pockets:0};for(const s of active?[...strokes,active]:strokes)for(const k in totals)totals[k]+=s.events?.[k]||0;
@@ -96,15 +96,15 @@
   function adjust(){stopDemo();finishStroke();for(const k of ['flow','spread'])settings[k]=Number($(k).value);settings.pathWidthMetres=Number($('roadWidth').value);syncUI();save();}
   for(const id of ['flow','spread','roadWidth'])$(id).addEventListener('input',adjust);
   document.querySelectorAll('[data-ink]').forEach(b=>b.onclick=()=>{stopDemo();finishStroke();settings.ink=b.dataset.ink;syncUI();save();});
-  $('refine').onclick=()=>{stopDemo();finishStroke();if(!strokes.length)return;const next=strokes.map(s=>s.routeRule?s:E.refineStroke(s,settings));const count=next.reduce((n,s)=>n+s.tracks.reduce((m,l)=>m+l.length,0),0);if(count>100000){toast('This drawing is too large to refine in one pass. Export a copy first.');return;}remember();strokes=next;strokes.forEach(s=>{s.paths=makePaths(s);});countPoints();save();dirty=true;updateStatus();toast('Paths refined from the main routes. Undo restores the earlier drawing.');};
+  $('refine').onclick=()=>{stopDemo();finishStroke();if(!strokes.length)return;const next=strokes.map(s=>s.routeRule>=2?s:E.refineStroke(s,settings));const count=next.reduce((n,s)=>n+s.tracks.reduce((m,l)=>m+l.length,0),0);if(count>100000){toast('This drawing is too large to refine in one pass. Export a copy first.');return;}remember();strokes=next;strokes.forEach(s=>{s.paths=makePaths(s);});countPoints();save();dirty=true;updateStatus();toast('Paths refined from the main routes. Undo restores the earlier drawing.');};
   $('showGrid').onchange=()=>{dirty=true;};
   function adjustLandscape(){stopDemo();finishStroke();const wasEnabled=landSettings.enabled;landSettings.enabled=$('showLandscape').checked;landSettings.influence=Number($('influence').value);landSettings.wetness=Number($('wetness').value);landSettings.exportCanvas=$('exportCanvas').checked;landscape=new HighwayLandscape.Landscape(landSettings);syncLandscape();save();dirty=true;if(wasEnabled!==landSettings.enabled)fitDrawing();updateStatus();}
   for(const id of ['showLandscape','exportCanvas'])$(id).onchange=adjustLandscape;
   for(const id of ['influence','wetness'])$(id).addEventListener('input',adjustLandscape);
   $('settingsToggle').onclick=()=>{const on=$('settingsPanel').classList.toggle('open');$('settingsToggle').setAttribute('aria-expanded',on);};
   function startDemo(){
-    if(demo)return stopDemo();finishStroke();setTool('draw');const points=E.exampleGesture(),p=points[0];
-    if(environment())fitDrawing();else{view.scale=Math.min(1.3,(w-65)/720,(h-70)/370);view.x=w/2;view.y=h/2-40*view.scale;}
+    if(demo)return stopDemo();finishStroke();setTool('draw');const points=E.routeExampleGesture(),p=points[0];
+    const xs=points.map(p=>p.x),ys=points.map(p=>p.y),minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);view.scale=Math.min(6,(w-100)/(maxX-minX+100*unitsPerMetre),(h-110)/(maxY-minY+100*unitsPerMetre));view.x=w/2-(minX+maxX)/2*view.scale;view.y=h/2-(minY+maxY)/2*view.scale;
     if(!beginStroke(p))return;demo={points,index:0,start:performance.now(),previous:0};updateStatus();dirty=true;
   }
   $('demo').onclick=$('emptyDemo').onclick=startDemo;$('stopDemo').onclick=stopDemo;
@@ -134,8 +134,8 @@
   }
   function validStroke(s){return s&&/^#[0-9a-f]{6}$/i.test(s.ink)&&['outline','ink','ribbon'].includes(s.style)&&Number.isFinite(s.width)&&s.width>=.1&&s.width<=18&&(!s.unitsPerMetre||s.unitsPerMetre===unitsPerMetre)&&Array.isArray(s.tracks)&&s.tracks.length>=1&&s.tracks.length<=128&&Array.isArray(s.bridges)&&[...s.tracks,...s.bridges].every(l=>Array.isArray(l)&&l.length<=100000&&l.every(p=>Array.isArray(p)&&p.length===2&&p.every(n=>Number.isFinite(n)&&Math.abs(n)<1000000)))&&(!s.widths||Array.isArray(s.widths)&&s.widths.length===s.tracks.length&&s.widths.every((ws,i)=>Array.isArray(ws)&&ws.length===s.tracks[i].length&&ws.every(n=>Number.isFinite(n)&&n>0&&n<=150)));}
   try{
-    const saved=JSON.parse(localStorage.getItem(storageKey)||localStorage.getItem('highway-freehand-v5')||localStorage.getItem('highway-freehand-v4')||localStorage.getItem('highway-freehand-v3')||localStorage.getItem('highway-freehand-v2')||localStorage.getItem('highway-drawing-v1'));
-    if([1,2,3,4,5,6].includes(saved?.version)&&Array.isArray(saved.strokes)&&saved.strokes.length<=500&&saved.strokes.every(validStroke)){
+    const saved=JSON.parse(localStorage.getItem(storageKey)||localStorage.getItem('highway-freehand-v6')||localStorage.getItem('highway-freehand-v5')||localStorage.getItem('highway-freehand-v4')||localStorage.getItem('highway-freehand-v3')||localStorage.getItem('highway-freehand-v2')||localStorage.getItem('highway-drawing-v1'));
+    if([1,2,3,4,5,6,7].includes(saved?.version)&&Array.isArray(saved.strokes)&&saved.strokes.length<=500&&saved.strokes.every(validStroke)){
       strokes=saved.strokes;strokes.forEach(s=>{if(!s.loopRule&&s.events){s.events.crossings=s.events.loops||0;s.events.loops=0;}E.scaleStroke(s,unitsPerMetre);s.paths=makePaths(s);});countPoints();
       if(saved.version>=2&&saved.settings){for(const k of ['flow','spread'])if(Number.isFinite(saved.settings[k])&&saved.settings[k]>=Number($(k).min)&&saved.settings[k]<=Number($(k).max))settings[k]=saved.settings[k];if(['#333832','#284c69','#a24b36','#5c6850'].includes(saved.settings.ink))settings.ink=saved.settings.ink;}
       if(saved.version>=5&&Number.isFinite(saved.settings?.pathWidthMetres)&&saved.settings.pathWidthMetres>=1.5&&saved.settings.pathWidthMetres<=6)settings.pathWidthMetres=saved.settings.pathWidthMetres;

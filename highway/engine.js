@@ -18,6 +18,7 @@
       this.settings={...defaults,...settings};this.u=settings.unitsPerMetre;this.environment=environment?.strength>0?environment:null;
       this.target={x,y};this.a={x,y};this.b={x,y};this.lastInput={x,y};this.turnSample={x,y};this.heading=null;this.routeHeading=0;
       this.turnMemory=0;this.sinceFeature=100*this.u;this.turnTravel=0;this.age=0;this.accumulator=0;this.speed=0;this.intent='Straight';this.zone='Open ground';
+      this.gestureTurn=0;this.gestureAbs=0;this.curveTravel=0;this.curveSamples=0;this.straightTravel=0;this.forkConsumed=false;this.loopConsumed=false;
       this.orbit=null;this.fork=null;this.pendingLoop=false;this.pendingFork=false;this.recentLoops=[];this.field={x:0,y:0};this.curvature=0;this.width=(settings.pathWidthMetres||3)*this.u;
     }
     aim(x,y,dt=1/60){
@@ -31,8 +32,15 @@
       if(this.heading===null)this.routeHeading=heading;
       this.turnMemory=this.turnMemory*Math.exp(-d/(140*this.u))+clamp(change,-1.8,1.8);
       this.turnTravel+=d;this.heading=heading;this.turnSample={x,y};
-      if(Math.abs(this.turnMemory)>.95&&this.turnTravel>12*this.u)this.pendingLoop=true;
-      else if(Math.abs(this.turnMemory)>.28&&this.turnTravel>20*this.u)this.pendingFork=true;
+      const delta=clamp(change,-1.4,1.4);this.gestureTurn+=delta;this.gestureAbs+=Math.abs(delta);
+      if(Math.abs(change)>Math.max(.003,.003*d/this.u)){this.curveTravel+=d;this.curveSamples++;this.straightTravel=0;}
+      else this.straightTravel+=d;
+      if(this.straightTravel>50*this.u){this.gestureTurn=0;this.gestureAbs=0;this.curveTravel=0;this.curveSamples=0;this.forkConsumed=false;this.loopConsumed=false;}
+      const coherence=Math.abs(this.gestureTurn)/Math.max(.01,this.gestureAbs);
+      // Re-evaluate candidates on each meaningful movement; never keep a stale
+      // loop request that can starve splits after the gesture has straightened.
+      this.pendingLoop=!this.loopConsumed&&Math.abs(this.gestureTurn)>2.5&&coherence>.72&&this.curveSamples>=4&&this.curveTravel>25*this.u;
+      this.pendingFork=!this.forkConsumed&&!this.pendingLoop&&Math.abs(this.turnMemory)>.22&&Math.abs(this.gestureTurn)>.25&&coherence>.55&&this.turnTravel>12*this.u;
     }
     step(dt){
       this.accumulator+=clamp(dt,0,.1);const frames=[],h=1/240,u=this.u,base=(this.settings.pathWidthMetres||3)*u;
@@ -51,15 +59,15 @@
         const dx=this.a.x-px,dy=this.a.y-py,d=Math.hypot(dx,dy);this.sinceFeature+=d;
         if(d>.005*u){const turn=wrap(Math.atan2(dy,dx)-this.routeHeading)*(1-Math.exp(-d/(5*u)));this.routeHeading+=turn;this.curvature+=(Math.abs(turn)/d-this.curvature)*(1-Math.exp(-d/(5*u)));}
         let branchStart=false,branchEnd=false,loopPoint=null;
-        if(this.pendingLoop&&!this.orbit&&!this.fork&&this.sinceFeature>140*u){
+        if(this.pendingLoop&&!this.orbit&&!this.fork&&this.sinceFeature>140*u&&this.age<.12){
           const radius=Math.max((12+this.settings.spread*.12)*u,base*4),tx=Math.cos(this.routeHeading),ty=Math.sin(this.routeHeading);
           const cost=side=>{let score=0;for(let i=0;i<12;i++){const a=i/12*Math.PI*2,x=this.a.x+tx*radius*Math.sin(a)-ty*side*radius*(1-Math.cos(a)),y=this.a.y+ty*radius*Math.sin(a)+tx*side*radius*(1-Math.cos(a));score+=env?.sample(x,y).resistance||0;}const cx=this.a.x-ty*side*radius,cy=this.a.y+tx*side*radius;for(const l of this.recentLoops)if(Math.hypot(cx-l.x,cy-l.y)<radius+l.r+base*2)score+=100;return score;};
           const left=cost(1),right=cost(-1),side=left<right?1:-1;
           if(Math.min(left,right)<100){this.orbit={anchor:[this.a.x,this.a.y],tx,ty,side,radius,elapsed:0,duration:.6};this.recentLoops.push({x:this.a.x-ty*side*radius,y:this.a.y+tx*side*radius,r:radius});if(this.recentLoops.length>32)this.recentLoops.shift();branchStart=true;this.sinceFeature=0;}
-          this.pendingLoop=false;this.pendingFork=false;this.turnMemory=0;this.turnTravel=0;
-        }else if(this.pendingFork&&!this.pendingLoop&&!this.fork&&!this.orbit&&this.sinceFeature>120*u){
-          this.fork={distance:0,length:(80+this.settings.spread*.4)*u,offset:(5+this.settings.spread*.1)*u,side:this.turnMemory<0?1:-1};
-          this.pendingFork=false;this.sinceFeature=0;
+          this.pendingLoop=false;this.pendingFork=false;this.loopConsumed=true;this.forkConsumed=true;this.turnMemory=0;this.turnTravel=0;
+        }else if(this.pendingFork&&!this.pendingLoop&&!this.fork&&!this.orbit&&this.sinceFeature>85*u&&this.age<.12){
+          this.fork={distance:0,length:(140+this.settings.spread*.2)*u,offset:(10+this.settings.spread*.12)*u,side:this.turnMemory<0?1:-1};
+          this.pendingFork=false;this.forkConsumed=true;this.sinceFeature=0;
         }
         let offset=0,forkEnd=false;
         if(this.fork){const f=this.fork;f.distance+=d+(this.age>.12?h*f.length/.18:0);const t=clamp(f.distance/f.length,0,1),safeOffset=Math.min(f.offset,.45/Math.max(1e-6,this.curvature));offset=f.side*safeOffset*Math.sin(Math.PI*t)**2;if(t>=1){this.fork=null;offset=0;forkEnd=true;}}
@@ -159,7 +167,7 @@
     const qx=c[0]-a[0],qy=c[1]-a[1],t=(qx*sy-qy*sx)/den,u=(qx*ry-qy*rx)/den;
     return t>0&&t<=1&&u>=0&&u<=1?[a[0]+t*rx,a[1]+t*ry]:null;
   }
-  function newStroke(settings){const s={tracks:[[],[]],widths:[[],[]],bridges:[],closedLoops:[],loopRule:1,width:settings.roadWidth,ink:settings.ink,style:'outline',events:{loops:0,splits:0,pockets:0,crossings:0},_split:false,_pocket:false,_lastCross:null};if(settings.unitsPerMetre){s.routeRule=1;return scaleStroke(s,settings.unitsPerMetre,settings.pathWidthMetres||3);}return s;}
+  function newStroke(settings){const s={tracks:[[],[]],widths:[[],[]],bridges:[],closedLoops:[],loopRule:1,width:settings.roadWidth,ink:settings.ink,style:'outline',events:{loops:0,splits:0,pockets:0,crossings:0},_split:false,_pocket:false,_lastCross:null};if(settings.unitsPerMetre){s.routeRule=2;return scaleStroke(s,settings.unitsPerMetre,settings.pathWidthMetres||3);}return s;}
   function signedArea(points){let area=0;for(let i=1;i<points.length;i++)area+=points[i-1][0]*points[i][1]-points[i][0]*points[i-1][1];return area/2;}
   function append(stroke,sample){
     for(let k=0;k<2;k++){
@@ -259,6 +267,15 @@
     for(let i=1;i<=100;i++)add(75+2.3*i,140-i*1.5,.012);
     return pts;
   }
-  const api={FlowBrush,RouteBrush,defaults,newStroke,append,finish,polygon,outlinePolygon,physicalWidth,scaleStroke,refineStroke,bounds,combinedBounds,pathData,maxWidth,svgDocument,intersect,signedArea,exampleGesture};
+  function routeExampleGesture(){
+    // One freehand gesture: straight run, open bend, straight run, sustained curl.
+    const pts=[],u=.23;let time=0,x=-240,y=-70,heading=0;
+    const add=(nx,ny)=>{time+=Math.hypot(nx-x,ny-y)/70;x=nx;y=ny;pts.push({x:x*u,y:y*u,time});};
+    pts.push({x:x*u,y:y*u,time:0});
+    const line=length=>{const sx=x,sy=y,n=Math.ceil(length/2);for(let i=1;i<=n;i++)add(sx+Math.cos(heading)*length*i/n,sy+Math.sin(heading)*length*i/n);};
+    const arc=(radius,angle)=>{const sx=x,sy=y,initial=heading,n=Math.ceil(radius*Math.abs(angle)/2);for(let i=1;i<=n;i++){const a=initial+angle*i/n;add(sx+radius*(Math.sin(a)-Math.sin(initial)),sy+radius*(Math.cos(initial)-Math.cos(a)));}heading+=angle;};
+    line(110);arc(140,Math.PI/3);line(190);arc(45,Math.PI);line(75);return pts;
+  }
+  const api={FlowBrush,RouteBrush,defaults,newStroke,append,finish,polygon,outlinePolygon,physicalWidth,scaleStroke,refineStroke,bounds,combinedBounds,pathData,maxWidth,svgDocument,intersect,signedArea,exampleGesture,routeExampleGesture};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.HighwayEngine=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

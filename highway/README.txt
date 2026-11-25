@@ -1,4 +1,4 @@
-HIGHWAY — FREEHAND PATHS / VERSION 6: CONNECTED METRIC ROUTES
+HIGHWAY — FREEHAND PATHS / VERSION 7: BALANCED AUTOMATIC BEHAVIOURS
 
 Public: https://naitiksharma-iaac.github.io/egholm-environment-atlas/highway/
 Independent interaction study inspired by Jeune Homme's Highway designer:
@@ -21,19 +21,26 @@ The path footprint defaults to 3 m (adjustable 1.5–6 m), with widening capped 
 footprints. At overview zoom, solid ink keeps the small geometry legible; zoom
 in to inspect the outlined paths. A scale indicator follows zoom.
 
-At default Spread 70, loops have about 20 m radius; their diameter stays below
-60 m across the current controls. Side branches extend about 108 m along the
-route and separate by at most 12 m. Separation shrinks through tight bends to
-avoid offset folds. Feature spacing is distance-based (120 m for splits, 140 m
-for loops). Recent loop envelopes help choose a free side. These are experimental
+Gentle bends and ordinary corners now favour a split. A loop requires a coherent
+curl of about 145 degrees, at least four curved input samples and 25 m of curved
+travel. A gesture can produce only one loop before straight movement resets it.
+Candidates are re-evaluated on movement, rather than retaining a stale loop flag
+that blocks branches. After 50 m of straight travel the gesture is reset.
+At default Spread 70, loops have about 20 m radius (diameter below 60 m across
+the current controls). Branches extend about 154 m along the route and separate
+by up to 18.4 m. Separation shrinks through tight bends to avoid offset folds.
+Feature spacing is distance-based (85 m for splits, 140 m for loops). Recent loop
+envelopes help choose a free side. These are experimental
 design parameters, not validated ecological, access or engineering standards.
 
 Flow controls smoothing. Spread controls branch opening and loop radius. Changes
 apply to new strokes. Slow curves and illustrative clearings can create wider
-pockets. The example feeds the same drawing engine; it has no preset loop paths.
+pockets. The updated example feeds straight runs, an open bend and a sustained
+curl through the same drawing engine; it has no preset output geometry. It zooms
+to the demonstration area so splits and loops can be compared clearly.
 
 REFINING OLDER DRAWINGS
-Refine paths rebuilds legacy strokes from their stored main route, discarding
+Refine paths rebuilds strokes from earlier behaviour versions from their stored main route, discarding
 old secondary oscillations and oversized generated circles. It simplifies small
 kinks (3 m tolerance), then applies the current metric behaviour. This is an
 approximation of the old main route, not a replay of the original pointer input.
@@ -66,7 +73,7 @@ scenarios, not surveyed land cover or habitat boundaries. No new water data is
 implied. The mainland is outside this isolated drawing experiment.
 
 SAVING AND EXPORT
-Canvas settings and ink save under highway-freehand-v6. v5, v4, v3, v2 and v1
+Canvas settings and ink save under highway-freehand-v7. v6, v5, v4, v3, v2 and v1
 load as fallbacks. Original keys remain as backups. Old widths are converted to
 metres once; Refine paths is a separate explicit geometry operation. No drawing
 is uploaded. Browser storage is local to the browser/origin; export a portable
