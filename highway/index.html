@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f5f3ed">
-  <title>Highway — a drawing instrument</title>
-  <meta name="description" content="An experimental drawing instrument. Pull a rotating bar across the page and let its tips trace looping, road-like paths.">
-  <link rel="stylesheet" href="style.css">
+  <title>Highway — freehand paths</title>
+  <meta name="description" content="Draw freely. Straight paths, loops, branches and pockets emerge from your movement. A two-dimensional drawing experiment.">
+  <link rel="stylesheet" href="style.css?v=flow2">
 </head>
 <body>
   <header class="masthead">
     <a class="wordmark" href="./" aria-label="Highway drawing instrument"><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><path d="M4 28V13C4 3 17 2 17 12s-8 10-8 3 17-8 17 4v9M8 28V13C8 7 13 7 13 12s0 7 0 3 9-3 9 4v9" fill="none" stroke="currentColor" stroke-width="1.3"/></svg><span>highway<span class="wordmark-dot">.</span></span></a>
-    <div class="masthead-description">A DRAWING INSTRUMENT<span>Move a little. Make something unexpected.</span></div>
+    <div class="masthead-description">A FREEHAND PATH EXPERIMENT<span>One gesture. Many possible paths.</span></div>
     <button class="text-button" id="aboutButton">About this experiment <span>↗</span></button>
   </header>
 
@@ -28,34 +28,36 @@
         </div>
         <div class="view-tools"><button id="fit" class="text-button" title="Fit drawing (F)">Fit</button><button id="resetView" class="zoom-value" title="Reset zoom to 100%">100%</button><button id="settingsToggle" class="text-button" aria-expanded="false">Settings</button></div>
       </div>
-      <div id="paper" tabindex="0" aria-label="Drawing canvas. Drag to draw. Use Demo to see the interaction without drawing. Hold Space to pan; use the mouse wheel to rotate the bar while drawing.">
+      <div id="paper" tabindex="0" aria-label="Freehand drawing canvas. Drag to create paths, loops and branches automatically. Hold Space to pan; use the wheel to zoom.">
         <canvas id="drawing" aria-label="Generated line drawing"></canvas>
         <div class="paper-corner top-left"></div><div class="paper-corner top-right"></div><div class="paper-corner bottom-left"></div><div class="paper-corner bottom-right"></div>
-        <div id="emptyState"><span class="eyebrow">NO DESTINATION REQUIRED</span><h1>Take a line<br>for a wander.</h1><p>Click and drag anywhere.<br>A moving bar does the drawing.</p><button id="emptyDemo" class="demo-link">Watch it move <span>↗</span></button><svg viewBox="0 0 130 60" aria-hidden="true"><path d="M8 8c15 2 22 35 45 29 29-8 10-43-9-29S53 70 114 41m-11-6 11 6-4 12" fill="none" stroke="currentColor" stroke-width="1.1"/></svg></div>
+        <div id="emptyState"><span class="eyebrow">JUST FOLLOW YOUR CURIOSITY</span><h1>Let the path<br>unfold.</h1><p>Drag, turn and double back.<br>Loops and branches follow your movement.</p><button id="emptyDemo" class="demo-link">Watch it unfold <span>↗</span></button><svg viewBox="0 0 130 60" aria-hidden="true"><path d="M8 8c15 2 22 35 45 29 29-8 10-43-9-29S53 70 114 41m-11-6 11 6-4 12" fill="none" stroke="currentColor" stroke-width="1.1"/></svg></div>
         <div id="demoBadge" hidden><i></i> Drawing demonstration <button id="stopDemo">Stop</button></div>
         <div id="canvasNote" hidden>Preview only — press and drag to leave a trail.</div>
       </div>
-      <footer class="canvas-footer"><span id="strokeStatus" role="status">A blank page. All yours.</span><span class="gesture-hint">DRAG TO DRAW <i>·</i> WHEEL TO ROTATE <i>·</i> SPACE TO PAN</span><span id="coordinateStatus">— / —</span></footer>
+      <footer class="canvas-footer"><span id="strokeStatus" role="status">A blank page. All yours.</span><span class="gesture-hint">DRAG TO DRAW <i>·</i> WHEEL TO ZOOM <i>·</i> SPACE TO PAN</span><span id="coordinateStatus">— / —</span></footer>
     </section>
 
     <aside class="settings" id="settingsPanel" aria-label="Drawing settings">
-      <div class="settings-heading"><span class="eyebrow">THE INSTRUMENT</span><span class="index-label">01 /</span></div>
-      <h2>A little control.<br>A little chance.</h2>
-      <div class="presets" role="group" aria-label="Motion presets"><button data-preset="fluid" class="active" aria-pressed="true">Fluid</button><button data-preset="precise" aria-pressed="false">Precise</button><button data-preset="wild" aria-pressed="false">Wild</button></div>
-      <label class="range-label" for="barLength">Bar length <output id="barLengthOut">100 px</output></label><input id="barLength" type="range" min="24" max="220" step="2" value="100"><p class="field-hint">A wider bar makes wider loops.</p>
-      <label class="range-label" for="inertia">Swing <output id="inertiaOut">65%</output></label><input id="inertia" type="range" min="0" max="100" value="65"><p class="field-hint">Let the bar lag, turn and overshoot.</p>
-      <label class="range-label" for="roadWidth">Trail width <output id="roadWidthOut">4 px</output></label><input id="roadWidth" type="range" min="1" max="14" step=".5" value="4">
-      <div class="setting-row"><label for="tracerCount">Tracing points</label><select id="tracerCount"><option value="1">One · centre</option><option value="2" selected>Two · bar tips</option><option value="3">Three · tips + centre</option></select></div>
-      <div class="setting-row"><label for="style">Mark style</label><select id="style"><option value="outline">Outlined roads</option><option value="ink">Fine ink</option><option value="ribbon">Solid ribbons</option></select></div>
+      <div class="settings-heading"><span class="eyebrow">FREEHAND · AUTOMATIC</span><span class="index-label">2D /</span></div>
+      <h2>Your movement.<br>The path responds.</h2>
+      <div class="live-response"><i></i><span id="liveState">Ready to follow</span><span class="live-label">LIVE</span></div>
+      <div class="behaviour-guide"><p><b>Go straight</b><span>Traces flow together.</span></p><p><b>Curve and return</b><span>Paths separate and rejoin.</span></p><p><b>Turn back tightly</b><span>Trails curl into loops.</span></p><p><b>Slow down through a curve</b><span>A wider pocket opens.</span></p></div>
+      <p class="drawing-stats" id="drawingStats">0 crossings · 0 separations · 0 pockets</p>
+      <details class="tuning"><summary>Adjust the feel <span>Optional</span></summary>
+      <label class="range-label" for="flow">Flow <output id="flowOut">65%</output></label><input id="flow" type="range" min="0" max="100" value="65"><p class="field-hint">Higher values let the following trail swing further.</p>
+      <label class="range-label" for="spread">Spread <output id="spreadOut">70 px</output></label><input id="spread" type="range" min="10" max="140" step="2" value="70"><p class="field-hint">How far paths can open through a turn.</p>
+      <label class="range-label" for="roadWidth">Path width <output id="roadWidthOut">6 px</output></label><input id="roadWidth" type="range" min="2" max="18" step=".5" value="6">
+      </details>
       <div class="setting-row"><span>Ink colour</span><div class="swatches" role="group" aria-label="Ink colour"><button data-ink="#333832" style="--swatch:#333832" aria-label="Charcoal ink" aria-pressed="true" class="active"></button><button data-ink="#284c69" style="--swatch:#284c69" aria-label="Blue ink" aria-pressed="false"></button><button data-ink="#a24b36" style="--swatch:#a24b36" aria-label="Terracotta ink" aria-pressed="false"></button><button data-ink="#5c6850" style="--swatch:#5c6850" aria-label="Olive ink" aria-pressed="false"></button></div></div>
-      <label class="check-label"><input type="checkbox" id="showGuide" checked> Show the moving bar</label><label class="check-label"><input type="checkbox" id="showGrid"> Show dot grid</label>
-      <button id="demo" class="primary-button"><span>↗</span> Try a moving example</button>
-      <div class="export-block"><div class="eyebrow">KEEP YOUR DRAWING</div><div class="export-actions"><button id="exportSVG" disabled>SVG <span>↓</span></button><button id="exportPNG" disabled>PNG <span>↓</span></button></div><p>SVG stays editable. Exports omit the guide.</p></div>
-      <div class="shortcuts"><b>A few useful moves</b><p><kbd>Shift</kbd> Hold the bar’s angle<br><kbd>Q</kbd> / <kbd>E</kbd> Turn the bar<br><kbd>Space</kbd> Drag to pan<br><kbd>Ctrl</kbd> + wheel Zoom the page<br><kbd>Esc</kbd> Stop the demonstration</p></div>
+      <label class="check-label"><input type="checkbox" id="showGrid"> Show dot grid</label>
+      <button id="demo" class="primary-button">↗ Watch a freehand example</button>
+      <div class="export-block"><div class="eyebrow">KEEP YOUR DRAWING</div><div class="export-actions"><button id="exportSVG" disabled>SVG <span>↓</span></button><button id="exportPNG" disabled>PNG <span>↓</span></button></div><p>SVG keeps the editable path outlines.</p></div>
+      <div class="shortcuts"><b>A few useful moves</b><p><kbd>Space</kbd> Drag to pan<br><kbd>Wheel</kbd> Zoom the page<br><kbd>F</kbd> Fit your drawing<br><kbd>Ctrl / ⌘ Z</kbd> Undo a stroke<br><kbd>Esc</kbd> Stop the example</p></div>
       <p class="credit">An independent interaction study after <a href="https://www.instagram.com/reel/DXz91ltIGps/" target="_blank" rel="noopener">Jeune Homme’s Highway designer ↗</a></p>
     </aside>
   </main>
   <div id="toast" role="status"></div>
-  <dialog id="about"><div class="dialog-top"><span class="eyebrow">ABOUT THE EXPERIMENT</span><button id="closeAbout" aria-label="Close about">×</button></div><h2>One gesture.<br>Many possible paths.</h2><p>The bar follows your pointer with a little inertia. Its tracing points leave curves behind as it moves and rotates. Try reversing direction, drawing a small circle, or turning the mouse wheel during a stroke.</p><p>This is an independent reconstruction of the visible interaction in <a href="https://www.instagram.com/reel/DXz91ltIGps/" target="_blank" rel="noopener">Jeune Homme’s reel</a>. It is not the original tool or a verified copy of its algorithm.</p><p>Your drawing stays in this browser. Use SVG or PNG to keep a copy. Changing settings affects the next stroke; undo restores cleared drawings too.</p><button id="backToDrawing" class="primary-button">Back to the page</button></dialog>
-  <script src="engine.js"></script><script src="app.js"></script>
+  <dialog id="about"><div class="dialog-top"><span class="eyebrow">ABOUT THE EXPERIMENT</span><button id="closeAbout" aria-label="Close about">×</button></div><h2>One gesture.<br>Many possible paths.</h2><p>Two independent trails follow your pointer with different amounts of inertia. Steady movement brings them together; changes of direction separate them and can curl them into loops. Slow, gentle curves widen into pockets.</p><p>The pocket is a 2D footprint for exploring your volière idea. This version is entirely a drawing study. Crossings are visual joins, not an engineered route network.</p><p>An independent experiment inspired by <a href="https://www.instagram.com/reel/DXz91ltIGps/" target="_blank" rel="noopener">Jeune Homme’s reel</a>, using our own motion rules. The example supplies only pointer movement to the same engine you use.</p><p>Your drawing stays in this browser. Earlier drawings are retained. SVG or PNG keeps a copy; clear can be undone. Optional adjustments affect new strokes.</p><button id="backToDrawing" class="primary-button">Back to the page</button></dialog>
+  <script src="engine.js?v=flow2"></script><script src="app.js?v=flow2"></script>
 </body></html>
