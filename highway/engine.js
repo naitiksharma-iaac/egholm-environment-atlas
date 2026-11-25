@@ -9,6 +9,8 @@
       this.a={x,y,vx:0,vy:0};this.b={x,y,vx:0,vy:0};this.heading=0;this.hasHeading=false;
       this.speed=0;this.turn=0;this.turnTarget=0;this.speedTarget=0;this.age=0;this.accumulator=0;
       this.width=this.settings.roadWidth;this.intent='Straight';
+      this.loopSample={x,y};this.loopHeading=null;this.turnMemory=0;this.loopTravel=0;
+      this.turnDistance=0;this.pendingLoop=false;this.orbit=null;
     }
     aim(x,y,dt=1/60){
       if(!Number.isFinite(x)||!Number.isFinite(y))return;
@@ -17,6 +19,16 @@
         const heading=Math.atan2(dy,dx),delta=this.hasHeading?wrap(heading-this.heading):0,mix=1-Math.exp(-d/12);
         this.turnTarget+=(clamp(delta/Math.max(d,1),-.12,.12)-this.turnTarget)*mix;
         this.speedTarget=clamp(d/Math.max(.002,dt),0,1800);this.heading=heading;this.hasHeading=true;this.lastInput={x,y};
+        // Resample meaningful movement before detecting a turn; ignore pointer jitter.
+        const sx=x-this.loopSample.x,sy=y-this.loopSample.y,travel=Math.hypot(sx,sy);
+        if(travel>=3){
+          const direction=Math.atan2(sy,sx),change=this.loopHeading===null?0:wrap(direction-this.loopHeading);
+          this.loopTravel+=travel;this.turnMemory=this.turnMemory*Math.exp(-travel/150)+change;
+          const threshold=1.15-.45*this.settings.flow/100;
+          this.turnDistance=Math.abs(this.turnMemory)>threshold?this.turnDistance+travel:0;
+          if(!this.orbit&&this.loopTravel>=Math.max(75,this.settings.spread*1.4,this.settings.roadWidth*9)&&this.turnDistance>=9&&this.speedTarget>18)this.pendingLoop=true;
+          this.loopSample={x,y};this.loopHeading=direction;
+        }
       }
     }
     step(dt){
@@ -30,15 +42,31 @@
         const offset=span*Math.tanh(this.turn*32)*clamp(this.speed/45,0,1);
         const integrate=(p,tx,ty,k,d)=>{p.vx+=(k*(tx-p.x)-d*p.vx)*h;p.vy+=(k*(ty-p.y)-d*p.vy)*h;p.x+=p.vx*h;p.y+=p.vy*h;};
         integrate(this.a,this.target.x,this.target.y,700,49);
-        const k=95-60*f,d=2*Math.sqrt(k)*(.9-.48*f);
-        integrate(this.b,this.target.x+nx*offset,this.target.y+ny*offset,k,d);
+        const k=95-60*f,d=2*Math.sqrt(k)*(.9-.48*f);let loopStart=false,loopEnd=false;
+        if(this.pendingLoop&&!this.orbit){
+          this.pendingLoop=false;loopStart=true;
+          const velocity=Math.hypot(this.b.vx,this.b.vy),angle=velocity>8?Math.atan2(this.b.vy,this.b.vx):this.heading;
+          const tx=Math.cos(angle),ty=Math.sin(angle),side=(this.a.x-this.b.x)*(-ty)+(this.a.y-this.b.y)*tx>0?-1:1;
+          const rx=clamp(20+.075*this.speed+span*.2,this.settings.roadWidth*3.2,Math.max(90,this.settings.roadWidth*4));
+          this.orbit={anchor:[this.b.x,this.b.y],tx,ty,side,rx,ry:rx*(.68+.23*Math.min(1,Math.abs(this.turnMemory)/1.8)),elapsed:0,duration:.65+rx*.003,speed:velocity};
+          this.turnMemory=0;this.turnDistance=0;this.loopTravel=0;
+        }
+        if(this.orbit){
+          const o=this.orbit;if(!loopStart)o.elapsed=Math.min(o.duration,o.elapsed+h);
+          const angle=o.elapsed/o.duration*Math.PI*2,u=o.rx*Math.sin(angle),v=o.side*o.ry*(1-Math.cos(angle));
+          this.b.x=o.anchor[0]+o.tx*u-o.ty*v;this.b.y=o.anchor[1]+o.ty*u+o.tx*v;
+          if(o.elapsed>=o.duration){
+            this.b.x=o.anchor[0];this.b.y=o.anchor[1];this.b.vx=o.tx*o.speed;this.b.vy=o.ty*o.speed;
+            loopEnd=true;this.orbit=null;this.turnMemory=0;this.turnDistance=0;this.loopTravel=0;
+          }
+        }else integrate(this.b,this.target.x+nx*offset,this.target.y+ny*offset,k,d);
         // Slow, gentle curves widen; a stationary pointer never creates a pocket.
         const bend=Math.abs(this.turn),gentle=clamp(bend/.008,0,1)*clamp((.06-bend)/.035,0,1);
         const slow=clamp((170-this.speedTarget)/115,0,1)*clamp((this.speedTarget-8)/25,0,1)*freshness;
         this.width+=(this.settings.roadWidth+span*.58*gentle*slow-this.width)*(1-Math.exp(-h*7));
         const lateral=Math.abs((this.b.x-this.a.x)*nx+(this.b.y-this.a.y)*ny);
-        this.intent=this.width>this.settings.roadWidth+5?'Pocket':lateral>this.settings.roadWidth*1.5?'Splitting':bend>.025?'Curling':bend>.004?'Curving':'Straight';
-        frames.push({a:[this.a.x,this.a.y],b:[this.b.x,this.b.y],width:this.width,lateral,intent:this.intent});
+        this.intent=this.orbit?'Looping':this.width>this.settings.roadWidth+5?'Pocket':lateral>this.settings.roadWidth*1.5?'Splitting':bend>.025?'Curling':bend>.004?'Curving':'Straight';
+        frames.push({a:[this.a.x,this.a.y],b:[this.b.x,this.b.y],width:this.width,lateral,intent:this.intent,loopStart,loopEnd});
       }
       return frames;
     }
@@ -48,18 +76,25 @@
     const qx=c[0]-a[0],qy=c[1]-a[1],t=(qx*sy-qy*sx)/den,u=(qx*ry-qy*rx)/den;
     return t>0&&t<=1&&u>=0&&u<=1?[a[0]+t*rx,a[1]+t*ry]:null;
   }
-  function newStroke(settings){return {tracks:[[],[]],widths:[[],[]],bridges:[],width:settings.roadWidth,ink:settings.ink,style:'outline',events:{loops:0,splits:0,pockets:0},_split:false,_pocket:false,_lastCross:null};}
+  function newStroke(settings){return {tracks:[[],[]],widths:[[],[]],bridges:[],closedLoops:[],loopRule:1,width:settings.roadWidth,ink:settings.ink,style:'outline',events:{loops:0,splits:0,pockets:0,crossings:0},_split:false,_pocket:false,_lastCross:null};}
+  function signedArea(points){let area=0;for(let i=1;i<points.length;i++)area+=points[i-1][0]*points[i][1]-points[i][0]*points[i-1][1];return area/2;}
   function append(stroke,sample){
     for(let k=0;k<2;k++){
-      const line=stroke.tracks[k],p=k?sample.b:sample.a,last=line.at(-1);if(last&&Math.hypot(last[0]-p[0],last[1]-p[1])<.85)continue;
+      const line=stroke.tracks[k],p=k?sample.b:sample.a,last=line.at(-1);if(last&&Math.hypot(last[0]-p[0],last[1]-p[1])<.85&&!(k&&(sample.loopStart||sample.loopEnd)))continue;
       if(last&&line.length>12){let distance=0;
         for(let j=line.length-2;j>=Math.max(0,line.length-650);j--){
           distance+=Math.hypot(line[j+1][0]-line[j][0],line[j+1][1]-line[j][1]);if(distance<Math.max(18,stroke.width*4))continue;
           const hit=intersect(last,p,line[j],line[j+1]);
-          if(hit&&(!stroke._lastCross||Math.hypot(hit[0]-stroke._lastCross[0],hit[1]-stroke._lastCross[1])>stroke.width*3)){stroke.events.loops++;stroke._lastCross=hit;break;}
+          if(hit&&(!stroke._lastCross||Math.hypot(hit[0]-stroke._lastCross[0],hit[1]-stroke._lastCross[1])>stroke.width*3)){stroke.events.crossings++;stroke._lastCross=hit;break;}
         }
       }
       line.push(p.map(n=>Math.round(n*100)/100));stroke.widths[k].push(k?stroke.width:sample.width);
+      if(k&&sample.loopStart)stroke._loopStart=line.length-1;
+      if(k&&sample.loopEnd&&stroke._loopStart!==undefined){
+        const from=stroke._loopStart,to=line.length-1,area=Math.abs(signedArea(line.slice(from,to+1)));
+        if(area>stroke.width*stroke.width*9){stroke.closedLoops.push({track:1,from,to,area});stroke.events.loops++;}
+        delete stroke._loopStart;
+      }
     }
     if(sample.lateral>stroke.width*2&&!stroke._split){stroke.events.splits++;stroke._split=true;}
     if(sample.lateral<stroke.width*.6)stroke._split=false;
@@ -74,7 +109,7 @@
       const c=[b[0]+(b[0]-prev[0])/vl*len*.35,b[1]+(b[1]-prev[1])/vl*len*.35];
       for(let i=1;i<=20;i++){const t=i/20,u=1-t;line.push([u*u*b[0]+2*u*t*c[0]+t*t*a[0],u*u*b[1]+2*u*t*c[1]+t*t*a[1]]);stroke.widths[1].push(stroke.width);}
     }
-    delete stroke._split;delete stroke._pocket;delete stroke._lastCross;return stroke;
+    delete stroke._split;delete stroke._pocket;delete stroke._lastCross;delete stroke._loopStart;return stroke;
   }
   function polygon(line,widths,width,pad=0){
     if(!line.length)return [];const left=[],right=[];
@@ -104,15 +139,13 @@
   // Pointer coordinates only: the demonstration has no special shape-generation code.
   function exampleGesture(){
     const pts=[];let time=0;const add=(x,y,dt=.016)=>{time+=dt;pts.push({x,y,time});};
-    for(let i=0;i<=100;i++)add(-330+i*2.2,-95);
-    for(let i=1;i<=160;i++){const a=i/160*Math.PI*2.3;add(-110+63*Math.sin(a),-32-63*Math.cos(a),.012);}
-    const start=pts.at(-1);
-    for(let i=1;i<=100;i++){const t=i/100;add(start.x+(185-start.x)*t,start.y+(30-start.y)*t+70*Math.sin(t*Math.PI),.012);}
-    for(let i=1;i<=100;i++){const t=i/100;add(185-145*t,30-100*Math.sin(t*Math.PI),.008);}
-    for(let i=1;i<=200;i++){const a=i/200*Math.PI;add(40+75*Math.sin(a),105-75*Math.cos(a),.025);}
-    for(let i=1;i<=100;i++)add(40+2.6*i,180-i*.2,.012);
+    for(let i=0;i<=100;i++)add(-320+i*1.6,-75);
+    for(let i=1;i<=100;i++)add(-160,-75+i*1.4,.014);
+    for(let i=1;i<=100;i++)add(-160+i*1.6,65,.014);
+    for(let i=1;i<=160;i++){const a=i/160*Math.PI/2;add(75*Math.sin(a),65+75*(1-Math.cos(a)),.025);}
+    for(let i=1;i<=100;i++)add(75+2.3*i,140-i*1.5,.012);
     return pts;
   }
-  const api={FlowBrush,defaults,newStroke,append,finish,polygon,bounds,pathData,maxWidth,svgDocument,intersect,exampleGesture};
+  const api={FlowBrush,defaults,newStroke,append,finish,polygon,bounds,pathData,maxWidth,svgDocument,intersect,signedArea,exampleGesture};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.HighwayEngine=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

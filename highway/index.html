@@ -5,7 +5,7 @@
   <meta name="theme-color" content="#f5f3ed">
   <title>Highway — freehand paths</title>
   <meta name="description" content="Draw freely. Straight paths, loops, branches and pockets emerge from your movement. A two-dimensional drawing experiment.">
-  <link rel="stylesheet" href="style.css?v=flow2">
+  <link rel="stylesheet" href="style.css?v=loops3">
 </head>
 <body>
   <header class="masthead">
@@ -42,8 +42,8 @@
       <div class="settings-heading"><span class="eyebrow">FREEHAND · AUTOMATIC</span><span class="index-label">2D /</span></div>
       <h2>Your movement.<br>The path responds.</h2>
       <div class="live-response"><i></i><span id="liveState">Ready to follow</span><span class="live-label">LIVE</span></div>
-      <div class="behaviour-guide"><p><b>Go straight</b><span>Traces flow together.</span></p><p><b>Curve and return</b><span>Paths separate and rejoin.</span></p><p><b>Turn back tightly</b><span>Trails curl into loops.</span></p><p><b>Slow down through a curve</b><span>A wider pocket opens.</span></p></div>
-      <p class="drawing-stats" id="drawingStats">0 crossings · 0 separations · 0 pockets</p>
+      <div class="behaviour-guide"><p><b>Go straight</b><span>Traces flow together.</span></p><p><b>Curve and return</b><span>Paths separate and rejoin.</span></p><p><b>Make a sustained turn</b><span>The following trail closes a loop.</span></p><p><b>Slow down through a curve</b><span>A wider pocket opens.</span></p></div>
+      <p class="drawing-stats" id="drawingStats">0 closed loops · 0 separations · 0 pockets</p>
       <details class="tuning"><summary>Adjust the feel <span>Optional</span></summary>
       <label class="range-label" for="flow">Flow <output id="flowOut">65%</output></label><input id="flow" type="range" min="0" max="100" value="65"><p class="field-hint">Higher values let the following trail swing further.</p>
       <label class="range-label" for="spread">Spread <output id="spreadOut">70 px</output></label><input id="spread" type="range" min="10" max="140" step="2" value="70"><p class="field-hint">How far paths can open through a turn.</p>
@@ -58,6 +58,6 @@
     </aside>
   </main>
   <div id="toast" role="status"></div>
-  <dialog id="about"><div class="dialog-top"><span class="eyebrow">ABOUT THE EXPERIMENT</span><button id="closeAbout" aria-label="Close about">×</button></div><h2>One gesture.<br>Many possible paths.</h2><p>Two independent trails follow your pointer with different amounts of inertia. Steady movement brings them together; changes of direction separate them and can curl them into loops. Slow, gentle curves widen into pockets.</p><p>The pocket is a 2D footprint for exploring your volière idea. This version is entirely a drawing study. Crossings are visual joins, not an engineered route network.</p><p>An independent experiment inspired by <a href="https://www.instagram.com/reel/DXz91ltIGps/" target="_blank" rel="noopener">Jeune Homme’s reel</a>, using our own motion rules. The example supplies only pointer movement to the same engine you use.</p><p>Your drawing stays in this browser. Earlier drawings are retained. SVG or PNG keeps a copy; clear can be undone. Optional adjustments affect new strokes.</p><button id="backToDrawing" class="primary-button">Back to the page</button></dialog>
-  <script src="engine.js?v=flow2"></script><script src="app.js?v=flow2"></script>
+  <dialog id="about"><div class="dialog-top"><span class="eyebrow">ABOUT THE EXPERIMENT</span><button id="closeAbout" aria-label="Close about">×</button></div><h2>One gesture.<br>Many possible paths.</h2><p>Two independent trails follow your pointer with different amounts of inertia. Steady movement brings them together; changes of direction separate them. Sustained turns automatically send the following trail around a loop that returns to its entry point. Slow, gentle curves widen into pockets.</p><p>The pocket is a 2D footprint for exploring your volière idea. This version is entirely a drawing study. Crossings are visual joins, not an engineered route network.</p><p>An independent experiment inspired by <a href="https://www.instagram.com/reel/DXz91ltIGps/" target="_blank" rel="noopener">Jeune Homme’s reel</a>, using our own motion rules. The example supplies open straight runs and bends to the same engine you use; it does not trace circles.</p><p>Your drawing stays in this browser. Earlier drawings are retained. SVG or PNG keeps a copy; clear can be undone. Optional adjustments affect new strokes.</p><button id="backToDrawing" class="primary-button">Back to the page</button></dialog>
+  <script src="engine.js?v=loops3"></script><script src="app.js?v=loops3"></script>
 </body></html>

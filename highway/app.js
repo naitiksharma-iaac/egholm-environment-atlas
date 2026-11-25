@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const E=HighwayEngine,$=id=>document.getElementById(id),canvas=$('drawing'),paper=$('paper'),ctx=canvas.getContext('2d');
-  const storageKey='highway-freehand-v2',paperColor='#fbfaf7',settings={...E.defaults};
+  const storageKey='highway-freehand-v3',paperColor='#fbfaf7',settings={...E.defaults};
   let strokes=[],undoStack=[],redoStack=[],active=null,brush=null,pointerId=null,inputTime=0,finishAt=0,demo=null;
   let w=1,h=1,dpr=1,view={x:0,y:0,scale:1},initialized=false,dirty=true,last=0,pan=null,space=false,tool='draw';
   let toastTimer,saveTimer,storageWarning=false,pointBudget=0,lastLoop=0,loopUntil=0,lastStats='';
@@ -10,7 +10,7 @@
   const local=e=>{const r=canvas.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top};};
   function toast(message){$('toast').textContent=message;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),3200);}
   function remember(){undoStack.push(strokes.slice());if(undoStack.length>30)undoStack.shift();redoStack=[];}
-  function save(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{localStorage.setItem(storageKey,JSON.stringify({version:2,settings,strokes:strokes.map(({paths,...s})=>s)}));}catch{storageWarning=true;toast('Browser storage is full. Export your drawing to keep it.');updateStatus();}},300);}
+  function save(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{localStorage.setItem(storageKey,JSON.stringify({version:3,settings,strokes:strokes.map(({paths,...s})=>s)}));}catch{storageWarning=true;toast('Browser storage is full. Export your drawing to keep it.');updateStatus();}},300);}
   function syncUI(){for(const k of ['flow','spread','roadWidth']){$(k).value=settings[k];$(k+'Out').textContent=settings[k]+(k==='flow'?'%':' px');}document.querySelectorAll('[data-ink]').forEach(b=>{b.classList.toggle('active',b.dataset.ink===settings.ink);b.setAttribute('aria-pressed',b.dataset.ink===settings.ink);});}
   function updateStatus(){
     const count=strokes.length+(active?1:0);$('emptyState').hidden=!!count||!!demo;
@@ -19,7 +19,7 @@
     $('strokeStatus').textContent=demo?'Following a freehand gesture…':active?'Drawing freely…':count?count+' stroke'+(count===1?'':'s')+(storageWarning?' · export to keep':' · saved in this browser'):'A blank page. All yours.';
     $('demoBadge').hidden=!demo;$('demo').textContent=demo?'Stop the example':'↗ Watch a freehand example';$('resetView').textContent=Math.round(view.scale*100)+'%';
     const totals={loops:0,splits:0,pockets:0};for(const s of active?[...strokes,active]:strokes)for(const k in totals)totals[k]+=s.events?.[k]||0;
-    $('drawingStats').textContent=[['loops','crossing'],['splits','separation'],['pockets','pocket']].map(([key,label])=>totals[key]+' '+label+(totals[key]===1?'':'s')).join(' · ');
+    $('drawingStats').textContent=[['loops','closed loop'],['splits','separation'],['pockets','pocket']].map(([key,label])=>totals[key]+' '+label+(totals[key]===1?'':'s')).join(' · ');
     if(!active){$('liveState').textContent='Ready to follow';$('liveState').dataset.state='ready';}
   }
   function path(points){const p=new Path2D();if(points.length){p.moveTo(...points[0]);for(let i=1;i<points.length;i++)p.lineTo(...points[i]);p.closePath();}return p;}
@@ -38,7 +38,7 @@
     if(!active)return;for(const f of frames)E.append(active,f);
     const stats=Object.values(active.events).join('/');if(stats!==lastStats){lastStats=stats;updateStatus();}
     if(active.events.loops>lastLoop){lastLoop=active.events.loops;loopUntil=performance.now()+700;}
-    $('liveState').textContent=performance.now()<loopUntil?'Loop forming':({Straight:'Flowing straight',Curving:'Following a curve',Splitting:'Paths separating',Curling:'Curling back',Pocket:'Opening a pocket'}[brush.intent]);
+    $('liveState').textContent=performance.now()<loopUntil?'Loop closed':({Straight:'Flowing straight',Curving:'Following a curve',Splitting:'Paths separating',Curling:'Curling back',Pocket:'Opening a pocket',Looping:'Closing a loop'}[brush.intent]);
     $('liveState').dataset.state=brush.intent.toLowerCase();
     const n=active.tracks.reduce((a,l)=>a+l.length,0);if(n>16000||n+pointBudget>100000){finishStroke();demo=null;toast('A large drawing. Export it or clear the page to continue.');}dirty=true;
   }
@@ -50,6 +50,8 @@
   }
   function finishStroke(){
     if(!active)return;
+    // Export, undo, blur or a new stroke must not leave a started loop half open.
+    for(let i=0;brush?.orbit&&i<480;i++)for(const frame of brush.step(1/240))E.append(active,frame);
     if(active.tracks.every(l=>l.length<2))undoStack.pop();
     else{E.finish(active);active.paths=makePaths(active);strokes.push(active);countPoints();save();}
     active=null;brush=null;finishAt=0;pointerId=null;dirty=true;updateStatus();
@@ -115,14 +117,14 @@
       while(demo&&demo.index<demo.points.length&&demo.points[demo.index].time<=elapsed){const p=demo.points[demo.index++],delta=p.time-demo.previous;demo.previous=p.time;brush.aim(p.x,p.y,delta);samples(brush.step(delta));}
       if(demo&&demo.index===demo.points.length){demo=null;finishAt=now+400;updateStatus();}
     }else if(active&&brush)samples(brush.step(dt));
-    if(finishAt&&now>=finishAt)finishStroke();if(dirty)render();requestAnimationFrame(animate);
+    if(finishAt&&now>=finishAt&&!brush?.orbit)finishStroke();if(dirty)render();requestAnimationFrame(animate);
   }
   function validStroke(s){return s&&/^#[0-9a-f]{6}$/i.test(s.ink)&&['outline','ink','ribbon'].includes(s.style)&&Number.isFinite(s.width)&&s.width>=1&&s.width<=18&&Array.isArray(s.tracks)&&s.tracks.length>=1&&s.tracks.length<=3&&Array.isArray(s.bridges)&&[...s.tracks,...s.bridges].every(l=>Array.isArray(l)&&l.length<=100000&&l.every(p=>Array.isArray(p)&&p.length===2&&p.every(n=>Number.isFinite(n)&&Math.abs(n)<1000000)))&&(!s.widths||Array.isArray(s.widths)&&s.widths.length===s.tracks.length&&s.widths.every((ws,i)=>Array.isArray(ws)&&ws.length===s.tracks[i].length&&ws.every(n=>Number.isFinite(n)&&n>0&&n<=150)));}
   try{
-    const saved=JSON.parse(localStorage.getItem(storageKey)||localStorage.getItem('highway-drawing-v1'));
-    if([1,2].includes(saved?.version)&&Array.isArray(saved.strokes)&&saved.strokes.length<=500&&saved.strokes.every(validStroke)){
-      strokes=saved.strokes;strokes.forEach(s=>s.paths=makePaths(s));countPoints();
-      if(saved.version===2&&saved.settings){for(const k of ['flow','spread','roadWidth'])if(Number.isFinite(saved.settings[k])&&saved.settings[k]>=Number($(k).min)&&saved.settings[k]<=Number($(k).max))settings[k]=saved.settings[k];if(['#333832','#284c69','#a24b36','#5c6850'].includes(saved.settings.ink))settings.ink=saved.settings.ink;}
+    const saved=JSON.parse(localStorage.getItem(storageKey)||localStorage.getItem('highway-freehand-v2')||localStorage.getItem('highway-drawing-v1'));
+    if([1,2,3].includes(saved?.version)&&Array.isArray(saved.strokes)&&saved.strokes.length<=500&&saved.strokes.every(validStroke)){
+      strokes=saved.strokes;strokes.forEach(s=>{if(!s.loopRule&&s.events){s.events.crossings=s.events.loops||0;s.events.loops=0;}s.paths=makePaths(s);});countPoints();
+      if(saved.version>=2&&saved.settings){for(const k of ['flow','spread','roadWidth'])if(Number.isFinite(saved.settings[k])&&saved.settings[k]>=Number($(k).min)&&saved.settings[k]<=Number($(k).max))settings[k]=saved.settings[k];if(['#333832','#284c69','#a24b36','#5c6850'].includes(saved.settings.ink))settings.ink=saved.settings.ink;}
     }
   }catch{}
   syncUI();resize();updateStatus();new ResizeObserver(resize).observe(paper);requestAnimationFrame(animate);

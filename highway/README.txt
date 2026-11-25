@@ -1,4 +1,4 @@
-HIGHWAY — FREEHAND PATHS / VERSION 2
+HIGHWAY — FREEHAND PATHS / VERSION 3
 
 Public: https://naitiksharma-iaac.github.io/egholm-environment-atlas/highway/
 Independent interaction study inspired by Jeune Homme's Highway designer:
@@ -11,8 +11,9 @@ Google Fonts are optional. System fonts work offline.
 
 Drag freely. No bar and no behaviour selectors. Two independent spring followers
 share the pointer target; the second has more inertia and a curvature-driven
-lateral offset. Straight trajectories overlap, turns separate them, and sharp
-reversals can create self-crossing loops. Slow gentle curves increase the first
+lateral offset. Straight trajectories overlap and turns separate them. Sustained
+turning after sufficient travel automatically sends the following trail around
+a closed orbit before it resumes following. Slow gentle curves increase the first
 trail's width into a pocket. This is the 2D footprint of the voliere exploration;
 it has no height, programme, structure or Egholm site data attached to it.
 
@@ -27,8 +28,18 @@ cannot generate motion indefinitely. Remaining follower lag reconnects through
 a short quadratic curve at release. Rapid input changes can produce irregular
 shapes; the sliders allow further tuning of this experimental response.
 
-Counters report debounced self-crossings, lateral separation episodes and width
-expansions. They are not graph-theoretic counts of network loops or branches.
+The loop trigger resamples pointer movement every 3 pixels, accumulates signed
+turning with distance-based decay, and requires sustained turning plus sufficient
+travel. Loop size and orientation depend on speed, spread and incoming direction.
+The following trail returns to its exact entry point. The loop counter increases
+only after this closure and a minimum enclosed area have been verified. A travel
+cooldown prevents a stack of loops at one location. Pauses and subpixel jitter do
+not trigger loops. Release/export finishes a started loop rather than cutting it.
+
+The example contains open straight runs and bends, with no circular input gesture.
+Counters report completed generated loops, lateral separations and widened pockets.
+Old self-crossing counts are retained as metadata but no longer labelled as loops.
+These are not graph-theoretic counts of every cycle in a complete route network.
 Overlap is composited visually. SVG exports editable filled outline paths, not a
 Boolean-unioned route graph. Both Canvas and SVG share variable-width polygons.
 These are drawing geometries, not engineering or accessibility assessments.
@@ -37,8 +48,8 @@ Wheel zooms; Space + drag pans; F fits; Ctrl/Command Z undoes; Shift Z redoes.
 Clear is undoable. Esc stops the example. Mouse, touch and stylus are supported.
 PNG exports have a maximum longest side of 4096 pixels. SVG preserves vectors.
 
-Drawings save locally under highway-freehand-v2. Existing highway-drawing-v1
-drawings load when no v2 drawing exists; the original v1 storage is left intact.
+Drawings save locally under highway-freehand-v3. Existing v2 and v1 drawings load
+when no v3 drawing exists; their original browser-storage keys are left intact.
 No drawings are uploaded. Browser storage is scoped to this browser/origin.
 Exports are the portable copy; clearing browser storage removes local drafts.
 
