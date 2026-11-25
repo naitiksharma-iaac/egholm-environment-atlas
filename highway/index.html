@@ -5,7 +5,7 @@
   <meta name="theme-color" content="#f5f3ed">
   <title>Highway — freehand paths</title>
   <meta name="description" content="Draw freely. Straight paths, loops, branches and pockets emerge from your movement. A two-dimensional drawing experiment.">
-  <link rel="stylesheet" href="style.css?v=scale5">
+  <link rel="stylesheet" href="style.css?v=routes6">
 </head>
 <body>
   <header class="masthead">
@@ -26,7 +26,7 @@
           <button id="redo" class="icon-button" aria-label="Redo stroke" title="Redo (Ctrl / ⌘ Shift Z)" disabled>↷</button>
           <span class="toolbar-divider"></span><button id="clear" class="text-button" disabled>Clear</button>
         </div>
-        <div class="view-tools"><button id="fit" class="text-button" title="Fit drawing (F)">Fit</button><button id="resetView" class="zoom-value" title="Reset zoom to 100%">100%</button><button id="settingsToggle" class="text-button" aria-expanded="false">Settings</button></div>
+        <div class="view-tools"><button id="refine" class="text-button" title="Rebuild older drawings from their main route. Undo restores the previous drawing." disabled>Refine paths</button><button id="fit" class="text-button" title="Fit drawing (F)">Fit</button><button id="resetView" class="zoom-value" title="Reset zoom to 100%">100%</button><button id="settingsToggle" class="text-button" aria-expanded="false">Settings</button></div>
       </div>
       <div id="paper" tabindex="0" aria-label="Freehand drawing canvas. Drag to create paths, loops and branches automatically. Hold Space to pan; use the wheel to zoom.">
         <canvas id="drawing" aria-label="Generated line drawing"></canvas>
@@ -53,7 +53,7 @@
         <label class="range-label" for="wetness">Wetness scenario <output id="wetnessOut">45%</output></label><input id="wetness" type="range" min="0" max="100" value="45"><p class="field-hint">Expands wet patches. No flood prediction.</p>
         <p class="environment-note">Changes affect new strokes. Existing ink stays.<br>Shoreline & vegetation: project map data. Other colours, puddles, clearings & dykes: illustrative.</p>
       </section>
-      <details class="tuning"><summary>How gestures behave</summary><div class="behaviour-guide"><p><b>Go straight</b><span>Traces flow together.</span></p><p><b>Curve and return</b><span>Paths separate and rejoin.</span></p><p><b>Make a sustained turn</b><span>The following trail closes a loop.</span></p><p><b>Slow down through a curve</b><span>A wider pocket opens.</span></p></div></details>
+      <details class="tuning"><summary>How gestures behave</summary><div class="behaviour-guide"><p><b>Go straight</b><span>One continuous main route.</span></p><p><b>Curve and return</b><span>Short branches split and rejoin.</span></p><p><b>Make a sustained turn</b><span>A small loop joins the main route.</span></p><p><b>Slow down through a curve</b><span>A wider pocket opens.</span></p></div></details>
       <p class="drawing-stats" id="drawingStats">0 closed loops · 0 separations · 0 pockets</p>
       <details class="tuning"><summary>Adjust the feel <span>Optional</span></summary>
       <label class="range-label" for="flow">Flow <output id="flowOut">65%</output></label><input id="flow" type="range" min="0" max="100" value="65"><p class="field-hint">Higher values let the following trail swing further.</p>
@@ -69,6 +69,6 @@
     </aside>
   </main>
   <div id="toast" role="status"></div>
-  <dialog id="about"><div class="dialog-top"><span class="eyebrow">ABOUT THE EXPERIMENT</span><button id="closeAbout" aria-label="Close about">×</button></div><h2>One gesture.<br>Many possible paths.</h2><p>Two independent trails follow your pointer with different amounts of inertia. Steady movement brings them together; changes of direction separate them. Sustained turns automatically send the following trail around a loop that returns to its entry point. Slow, gentle curves widen into pockets.</p><p>The landscape adds soft steering: water and woodland resist, clearings attract and widen, and dyke lines encourage alignment. Shoreline and vegetation come from existing project map data; ground colours, wet patches, clearings and dyke lines are illustrative. Influence changes steering strength; Wetness expands the scenario patches. These are drawing forces, not protected-area rules or flood predictions. Old strokes keep their geometry when you change the canvas.</p><p>The pocket is a 2D footprint for exploring your volière idea. This version is entirely a drawing study. Crossings are visual joins, not an engineered route network.</p><p>An independent experiment inspired by <a href="https://www.instagram.com/reel/DXz91ltIGps/" target="_blank" rel="noopener">Jeune Homme’s reel</a>, using our own motion rules. The example supplies open straight runs and bends to the same engine you use; it does not trace circles.</p><p>Your drawing stays in this browser. Earlier drawings are retained. SVG or PNG keeps a copy; clear can be undone. Optional adjustments affect new strokes.</p><button id="backToDrawing" class="primary-button">Back to the page</button></dialog>
-  <script src="landscape-data.js?v=scale5"></script><script src="landscape.js?v=scale5"></script><script src="engine.js?v=scale5"></script><script src="app.js?v=scale5"></script>
+  <dialog id="about"><div class="dialog-top"><span class="eyebrow">ABOUT THE EXPERIMENT</span><button id="closeAbout" aria-label="Close about">×</button></div><h2>One gesture.<br>Many possible paths.</h2><p>A smooth main route follows your pointer. Gradual turns can open a short branch that rejoins it; sustained turns can attach a closed loop. Branches and loops use metre-scale dimensions and spacing. Slow curves or clearings widen into pockets. Features remain automatic.</p><p>The landscape adds soft steering: water and woodland resist, clearings attract and widen, and dyke lines encourage alignment. Shoreline and vegetation come from existing project map data; ground colours, wet patches, clearings and dyke lines are illustrative. Influence changes steering strength; Wetness expands the scenario patches. These are drawing forces, not protected-area rules or flood predictions. Old strokes keep their geometry when you change the canvas.</p><p>The pocket is a 2D footprint for exploring your volière idea. This version is entirely a drawing study. Crossings are visual joins, not an engineered route network.</p><p>An independent experiment inspired by <a href="https://www.instagram.com/reel/DXz91ltIGps/" target="_blank" rel="noopener">Jeune Homme’s reel</a>, using our own motion rules. The example supplies open straight runs and bends to the same engine you use; it does not trace circles.</p><p>Your drawing stays in this browser. Earlier drawings are retained. SVG or PNG keeps a copy; clear can be undone. Optional adjustments affect new strokes.</p><button id="backToDrawing" class="primary-button">Back to the page</button></dialog>
+  <script src="landscape-data.js?v=routes6"></script><script src="landscape.js?v=routes6"></script><script src="engine.js?v=routes6"></script><script src="app.js?v=routes6"></script>
 </body></html>
